@@ -1,25 +1,10 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './supabaseClient'
+import { useAuth } from './hooks/useAuth'
 import SignIn from './SignIn'
+import FullListPage from './pages/FullListPage'
+import './App.css'
 
 function App() {
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session)
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const { session, loading, signOut } = useAuth()
 
   if (loading) return <p>Loading...</p>
 
@@ -27,8 +12,11 @@ function App() {
 
   return (
     <div>
-      <p>Signed in as {session.user.email}</p>
-      <button onClick={() => supabase.auth.signOut()}>Sign out</button>
+      <header className="app-header">
+        <p>Signed in as {session.user.email}</p>
+        <button onClick={signOut}>Sign out</button>
+      </header>
+      <FullListPage session={session} />
     </div>
   )
 }
