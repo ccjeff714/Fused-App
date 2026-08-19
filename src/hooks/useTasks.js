@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
+function sortByDueDate(tasks) {
+  return [...tasks].sort((a, b) => {
+    if (!a.due_date && !b.due_date) return 0
+    if (!a.due_date) return 1
+    if (!b.due_date) return -1
+    return a.due_date.localeCompare(b.due_date)
+  })
+}
+
 export function useTasks(session) {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -58,7 +67,7 @@ export function useTasks(session) {
       setError(error.message)
       return { error }
     }
-    setTasks((current) => [...current, data])
+    setTasks((current) => sortByDueDate([...current, data]))
     return { data }
   }, [session])
 
@@ -79,7 +88,7 @@ export function useTasks(session) {
       setError(blockedError)
       return { error: blockedError }
     }
-    setTasks((current) => current.map((t) => (t.id === taskId ? data[0] : t)))
+    setTasks((current) => sortByDueDate(current.map((t) => (t.id === taskId ? data[0] : t))))
     return { data: data[0] }
   }, [])
 
