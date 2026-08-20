@@ -12,7 +12,7 @@ PWA shell live and installable (manifest + service worker verified via Chrome De
 ## What Good Looks Like — Phase 1 (completed 2026-08-20)
 A user can create a task with just a title (the only required field), optionally add due date/area/notes, see it in a Full List view, edit it, and delete it. All reads/writes go through the authenticated Supabase client. No time-estimate field anywhere. Capture stays low-friction — title-only is a fully valid task. Task create/edit/delete manually verified working end-to-end against Supabase.
 
-**Known caveat — RLS cross-user isolation not yet manually verified.** The `tasks` RLS policy (`auth.uid() = user_id`, scoping every read/write to the signed-in user) is deployed and was confirmed present via direct schema inspection, but Phase 1 verification only had one test account available, so cross-user isolation (that a second signed-in user genuinely cannot see or modify the first user's tasks) has not been manually confirmed end-to-end. Worth a manual two-account check before this app handles anything sensitive, and revisit per CLAUDE.md's Human Validation Zone for auth/RLS.
+**RLS cross-user isolation — resolved (2026-08-20).** The `tasks` RLS policy (`auth.uid() = user_id`, scoping every read/write to the signed-in user) was manually verified with a second test account: signed in as account two, added a task, and confirmed only that account's own task was visible — account one's task did not leak through. RLS is working as designed.
 
 ## What We Are Building Right Now
 Phase 2 — Session-First, per Build_Plan.md: the Top 3 algorithm (due-date-first, priority-tier tiebreak), the Home/Session screen showing Top 3, a native timer + Active Session screen, and `execution_sessions` writes / `last_touched_at` updates.
