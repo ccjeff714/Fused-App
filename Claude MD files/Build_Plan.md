@@ -59,11 +59,11 @@ tasks (
   last_touched_at  timestamptz,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now(),
-  top3_override_slot  integer,  -- 1 | 2 | 3, nullable — manual Top 3 slot assignment
+  top3_override_slot  integer,  -- 1 | 2 | 3, nullable — manual Top 3 slot assignment; check (top3_override_slot is null or top3_override_slot in (1,2,3))
   top3_override_date  date      -- nullable — the override only applies when this equals today
 )
 ```
-Partial unique index `(user_id, top3_override_date, top3_override_slot) WHERE top3_override_slot IS NOT NULL` prevents two tasks from claiming the same slot on the same day for the same user.
+Partial unique index `(user_id, top3_override_date, top3_override_slot) WHERE top3_override_slot IS NOT NULL` prevents two tasks from claiming the same slot on the same day for the same user. There's no constraint requiring `top3_override_slot` and `top3_override_date` to be both-null-or-both-set — the app never writes one without the other, but nothing at the DB level currently enforces that pairing.
  
 ### `execution_sessions` (the execution log — auto-populated, never manually entered)
 ```sql

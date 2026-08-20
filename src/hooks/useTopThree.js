@@ -80,14 +80,26 @@ export function useTopThree(session) {
     setError(null)
     const today = todayISO()
 
-    const currentOccupant = topThree.find(
-      (t) => t.top3_override_date === today && t.top3_override_slot === slot && t.id !== taskId
-    )
-    if (currentOccupant) {
+    // Look up any current occupant of this slot directly — regardless of
+    // status — since a done task still holds the slot in the DB (and the
+    // unique index) even though it's no longer in the local `topThree` list.
+    const { data: occupants, error: occupantError } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('top3_override_date', today)
+      .eq('top3_override_slot', slot)
+      .neq('id', taskId)
+
+    if (occupantError) {
+      setError(occupantError.message)
+      return { error: occupantError }
+    }
+
+    if (occupants && occupants.length > 0) {
       const { error: clearError } = await supabase
         .from('tasks')
         .update({ top3_override_slot: null, top3_override_date: null })
-        .eq('id', currentOccupant.id)
+        .eq('id', occupants[0].id)
       if (clearError) {
         setError(clearError.message)
         return { error: clearError }
@@ -112,7 +124,7 @@ export function useTopThree(session) {
 
     await refetch()
     return { data: data[0] }
-  }, [topThree, refetch])
+  }, [refetch])
 
   return { topThree, loading, error, setOverride, refetch }
 }

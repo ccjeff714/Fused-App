@@ -11,6 +11,7 @@ export default function SessionTimer({ session }) {
   const [intervalMinutes, setIntervalMinutes] = useState(25)
   const [secondsLeft, setSecondsLeft] = useState(25 * 60)
   const [running, setRunning] = useState(false)
+  const [error, setError] = useState(null)
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -35,12 +36,12 @@ export default function SessionTimer({ session }) {
     if (!running) return
     intervalRef.current = setInterval(() => {
       setSecondsLeft((s) => {
-        if (s <= 1) {
+        const next = s > 0 ? s - 1 : 0
+        if (next === 0) {
           clearInterval(intervalRef.current)
           setRunning(false)
-          return 0
         }
-        return s - 1
+        return next
       })
     }, 1000)
     return () => clearInterval(intervalRef.current)
@@ -49,20 +50,32 @@ export default function SessionTimer({ session }) {
   const handleIntervalChange = async (e) => {
     const minutes = Number(e.target.value)
     if (!minutes || minutes < 1) return
-    setIntervalMinutes(minutes)
-    setSecondsLeft(minutes * 60)
-    setRunning(false)
+    setError(null)
 
-    const { data } = await supabase
+    const { data, error: readError } = await supabase
       .from('profiles')
       .select('settings')
       .eq('id', session.user.id)
       .single()
 
-    await supabase
+    if (readError) {
+      setError('Could not save the interval — try again.')
+      return
+    }
+
+    const { error: writeError } = await supabase
       .from('profiles')
-      .update({ settings: { ...(data?.settings ?? {}), default_session_minutes: minutes } })
+      .update({ settings: { ...(data.settings ?? {}), default_session_minutes: minutes } })
       .eq('id', session.user.id)
+
+    if (writeError) {
+      setError('Could not save the interval — try again.')
+      return
+    }
+
+    setIntervalMinutes(minutes)
+    setSecondsLeft(minutes * 60)
+    setRunning(false)
   }
 
   const handleReset = () => {
@@ -92,6 +105,7 @@ export default function SessionTimer({ session }) {
       </label>
 
       {secondsLeft === 0 && <p className="timer-done">Time's up.</p>}
+      {error && <p className="error-text">{error}</p>}
     </div>
   )
 }

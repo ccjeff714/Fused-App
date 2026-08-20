@@ -18,6 +18,13 @@ export function useSession(session) {
       setError(error.message)
       return { error }
     }
+
+    const { error: taskError } = await supabase
+      .from('tasks')
+      .update({ last_touched_at: new Date() })
+      .eq('id', taskId)
+    if (taskError) setError(taskError.message)
+
     setActiveSession(data)
     return { data }
   }, [session])
@@ -49,8 +56,14 @@ export function useSession(session) {
         .upsert({ user_id: session.user.id, date: todayISO(), engaged: true }, { onConflict: 'user_id,date' }),
     ])
 
-    if (taskError) setError(taskError.message)
-    if (streakError) setError(streakError.message)
+    if (taskError || streakError) {
+      const message = taskError?.message ?? streakError?.message
+      setError(message)
+      // execution_sessions is already marked ended — don't reopen it, but keep
+      // activeSession so the screen stays up and the caller can see the failure
+      // and let the person retry the task/streak follow-up writes.
+      return { error: message }
+    }
 
     setActiveSession(null)
     return { data: data[0] }

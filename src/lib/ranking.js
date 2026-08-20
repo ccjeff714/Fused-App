@@ -9,6 +9,9 @@ export function rankTasks(tasks) {
       return a.due_date < b.due_date ? -1 : 1 // ISO date strings sort lexically
     }
     // same due date (or both null) — priority tier breaks the tie
-    return tierOrder[a.priority_tier] - tierOrder[b.priority_tier]
+    const priorityDelta = tierOrder[a.priority_tier] - tierOrder[b.priority_tier]
+    if (priorityDelta !== 0) return priorityDelta
+    // still tied — fall back to id so ordering doesn't depend on fetch order
+    return String(a.id).localeCompare(String(b.id))
   })
 }

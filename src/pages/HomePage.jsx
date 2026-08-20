@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { useSession } from '../hooks/useSession'
 import HomeSessionScreen from '../components/session/HomeSessionScreen'
 import ActiveSessionScreen from '../components/session/ActiveSessionScreen'
 
-export default function HomePage({ session }) {
-  const { activeSession, startSession, endSession } = useSession(session)
+export default function HomePage({ session, sessionLifecycle }) {
+  const { activeSession, startSession, endSession } = sessionLifecycle
   const [activeTask, setActiveTask] = useState(null)
 
   const handleSessionStarted = (task) => {
