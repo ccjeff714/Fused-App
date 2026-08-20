@@ -26,7 +26,7 @@ All tables carry `user_id` from day one per the resolved sharing-readiness decis
 profiles (
   id            uuid primary key references auth.users(id),
   email         text,
-  settings      jsonb default '{"inactivity_threshold_days": 2}',
+  settings      jsonb default '{"inactivity_threshold_days": 2, "default_session_minutes": 25}',
   created_at    timestamptz default now()
 )
 ```
@@ -58,9 +58,12 @@ tasks (
   project_id       uuid references projects(id),
   last_touched_at  timestamptz,
   created_at       timestamptz default now(),
-  updated_at       timestamptz default now()
+  updated_at       timestamptz default now(),
+  top3_override_slot  integer,  -- 1 | 2 | 3, nullable — manual Top 3 slot assignment; check (top3_override_slot is null or top3_override_slot in (1,2,3))
+  top3_override_date  date      -- nullable — the override only applies when this equals today
 )
 ```
+Partial unique index `(user_id, top3_override_date, top3_override_slot) WHERE top3_override_slot IS NOT NULL` prevents two tasks from claiming the same slot on the same day for the same user. There's no constraint requiring `top3_override_slot` and `top3_override_date` to be both-null-or-both-set — the app never writes one without the other, but nothing at the DB level currently enforces that pairing.
  
 ### `execution_sessions` (the execution log — auto-populated, never manually entered)
 ```sql
@@ -102,6 +105,8 @@ reentry_events (
 - No time-estimate field anywhere — deliberate, per the timer-guilt anti-pattern.
 - `last_touched_at` on tasks is what the overdue/staleness trigger reads from a — updated whenever a session starts or the task is edited.
 - `settings.inactivity_threshold_days` on the profile lives in jsonb so it's adjustable without a schema migration, matching the "changeable option" decision.
+- `settings.default_session_minutes` (added Phase 2, 2026-08-20, default `25`) is the Active Session Screen's adjustable Pomodoro-style interval — a session-duration preference, not a time-estimate field on a task, so it's exempt from the DO NOT list's time-estimate rule.
+- `tasks.top3_override_slot` / `tasks.top3_override_date` (added Phase 2, 2026-08-20) back the manual Top 3 override — swapping a different task into one of today's three recommended slots. No cleanup job needed; an override past its date is just inert leftover data since the app only reads it when `top3_override_date` equals today.
 ---
  
 ## 🖥️ Screen-by-Screen Flow
