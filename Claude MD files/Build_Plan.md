@@ -26,7 +26,7 @@ All tables carry `user_id` from day one per the resolved sharing-readiness decis
 profiles (
   id            uuid primary key references auth.users(id),
   email         text,
-  settings      jsonb default '{"inactivity_threshold_days": 2, "default_session_minutes": 25}',
+  settings      jsonb default '{"inactivity_threshold_days": 2, "default_session_minutes": 25, "default_break_minutes": 5, "auto_start_breaks": true, "auto_start_next_sprint": false, "show_success_screen": true, "success_screen_gif": true, "success_sound_effect": true}',
   created_at    timestamptz default now()
 )
 ```
@@ -40,9 +40,22 @@ projects (
   description   text,
   status        text default 'active',  -- active | on_hold | done
   created_at    timestamptz default now(),
+  updated_at    timestamptz default now(),
+  role_id       uuid references roles(id)  -- nullable — which Role this Project belongs to
+)
+```
+
+### `roles` (PARA "Areas" — Operations, Data Management, Project Management, etc.)
+```sql
+roles (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references profiles(id) not null,
+  name          text not null,
+  created_at    timestamptz default now(),
   updated_at    timestamptz default now()
 )
 ```
+Same RLS pattern as `projects` — a user only ever sees their own roles.
  
 ### `tasks` (the Living Task)
 ```sql
@@ -60,10 +73,15 @@ tasks (
   created_at       timestamptz default now(),
   updated_at       timestamptz default now(),
   top3_override_slot  integer,  -- 1 | 2 | 3, nullable — manual Top 3 slot assignment; check (top3_override_slot is null or top3_override_slot in (1,2,3))
-  top3_override_date  date      -- nullable — the override only applies when this equals today
+  top3_override_date  date,     -- nullable — the override only applies when this equals today
+  planned_date  date,           -- nullable — a "working on this day" designation, distinct from due_date
+  role_id       uuid references roles(id),  -- nullable — kept in sync with project_id's role by a DB trigger, see below
+  subtasks      jsonb default '[]'  -- lightweight checklist: array of {text, done} objects, not a relational structure
 )
 ```
 Partial unique index `(user_id, top3_override_date, top3_override_slot) WHERE top3_override_slot IS NOT NULL` prevents two tasks from claiming the same slot on the same day for the same user. There's no constraint requiring `top3_override_slot` and `top3_override_date` to be both-null-or-both-set — the app never writes one without the other, but nothing at the DB level currently enforces that pairing.
+
+**Trigger `sync_role_on_project_change`** (before insert or update of `project_id` on `tasks`, calls `sync_task_role_with_project()`): whenever a task's `project_id` is set, this trigger overwrites `role_id` to match that project's `role_id`. This is a hard lock enforced in the database, not just suggested by the UI — see `CLAUDE.md` Gotchas for the re-evaluation checkpoint on this decision.
  
 ### `execution_sessions` (the execution log — auto-populated, never manually entered)
 ```sql
@@ -100,6 +118,15 @@ reentry_events (
   acknowledged_at timestamptz
 )
 ```
+
+### Storage — `session-backgrounds` bucket
+Private bucket, one folder per user (`{user_id}/...` path convention). Four RLS policies on `storage.objects`, all scoped to `bucket_id = 'session-backgrounds' AND (storage.foldername(name))[1] = auth.uid()::text`:
+- `Users can view own session background` (SELECT)
+- `Users can upload own session background` (INSERT)
+- `Users can update own session background` (UPDATE)
+- `Users can delete own session background` (DELETE)
+
+Backs the Active Session Screen's optional background image — a user can only ever read or write files under their own `{user_id}/` folder.
  
 **Notes:**
 - No time-estimate field anywhere — deliberate, per the timer-guilt anti-pattern.
@@ -107,6 +134,11 @@ reentry_events (
 - `settings.inactivity_threshold_days` on the profile lives in jsonb so it's adjustable without a schema migration, matching the "changeable option" decision.
 - `settings.default_session_minutes` (added Phase 2, 2026-08-20, default `25`) is the Active Session Screen's adjustable Pomodoro-style interval — a session-duration preference, not a time-estimate field on a task, so it's exempt from the DO NOT list's time-estimate rule.
 - `tasks.top3_override_slot` / `tasks.top3_override_date` (added Phase 2, 2026-08-20) back the manual Top 3 override — swapping a different task into one of today's three recommended slots. No cleanup job needed; an override past its date is just inert leftover data since the app only reads it when `top3_override_date` equals today.
+- `settings.default_break_minutes` / `auto_start_breaks` / `auto_start_next_sprint` / `show_success_screen` / `success_screen_gif` / `success_sound_effect` (added Phase 5, 2026-08-21, all live) round out the Pomodoro session-preference set alongside `default_session_minutes` — break length, whether breaks/next sprints auto-start, and end-of-session celebration options. None are task-level fields, so none touch the DO NOT list's time-estimate rule.
+- `tasks.planned_date` (added Phase 5, 2026-08-21) is a "working on this day" designation, separate from `due_date` (when it's actually due) and from the Top 3 override (today's recommended slots) — a task can be planned for a day without being due that day.
+- `tasks.role_id` (added Phase 5, 2026-08-21) is kept in sync with `project_id`'s role by the `sync_role_on_project_change` trigger whenever `project_id` is set — see the trigger note above `tasks`.
+- `tasks.subtasks` (added Phase 5, 2026-08-21, default `[]`) is a `jsonb` array of `{text, done}` objects — a lightweight checklist, not a relational parent-child table. See `glossary.md`'s Subtasks entry for the reasoning.
+- `handle_new_user()` was hardened (pinned `search_path`, revoked `EXECUTE` from `anon`/`authenticated`) to close direct RPC access — the same hardening is now also applied to `sync_task_role_with_project()`, confirmed live (`anon`/`authenticated` cannot execute either function directly; both run as `SECURITY DEFINER` with `search_path` pinned to `''`).
 ---
  
 ## 🖥️ Screen-by-Screen Flow
@@ -165,10 +197,8 @@ Each phase should be independently testable before moving to the next — same i
 **Phase 4 — Layered Context**
 - Task Detail expand/collapse
 - Notes field, rich enough for context (links, formatting as needed)
-**Phase 5 — Projects**
-- Projects CRUD
-- Task ↔ Project relation
-- Projects View screen
+**Phase 5 — Roles & Projects**
+- See `Phase5_Handoff_Spec.md` for full scope — grew considerably beyond this build plan's original "Projects CRUD" framing to include Roles as a real table, the Projects View (Roles as collapsible sections, Projects nested inside), the Role-lock trigger, and the subtasks checklist field.
 **Phase 6 — Weekly Short List**
 - Designation mechanism (how a task gets marked "this week")
 - Short List screen
