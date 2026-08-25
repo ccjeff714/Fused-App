@@ -129,3 +129,117 @@ All three writes (`execution_sessions` update, `tasks` update, `streak_log` upse
 ## Human Validation Zone
 
 Per `FOR_JEFFREY.md`'s Phase 1 debrief: the sandbox environment cannot complete a real Supabase auth flow (no email inbox access, `supabase.co` egress blocked by policy). Most of Phase 2 requires a real signed-in session to verify (Top 3 populating correctly, timer/session writes, streak_log upserts) — expect this phase to need your manual click-through rather than Claude Code self-verifying end-to-end. Standard CodeRabbit PR review still applies at the code level.
+
+---
+
+## Addendum (2026-08-20) — Settings Page, Break Timer, "Move to Top 3," Celebration Effects
+
+Added after initial Phase 2 build was merged and manually verified. Pulls the Settings screen forward from Phase 8 (originally scoped there for just the inactivity threshold) — Phase 8 will add the inactivity threshold to this same page rather than building Settings twice.
+
+### A1. Schema — already applied directly (2026-08-20), not a Claude Code task
+
+`profiles.settings` gained five new keys, same jsonb-merge pattern as `default_session_minutes`:
+
+| Key | Default | Maps to (BlitzIt reference) |
+|---|---|---|
+| `default_break_minutes` | `5` | Break |
+| `auto_start_breaks` | `true` | Start breaks automatically |
+| `auto_start_next_sprint` | `false` | Start work sprints automatically |
+| `show_success_screen` | `true` | Show success screen |
+| `success_screen_gif` | `true` | Fun gif on success screen |
+| `success_sound_effect` | `true` | Success sound effect |
+
+No "football celebration" equivalent — explicitly out of scope per Jeffrey's decision 2026-08-20.
+
+### A2. Component Structure Addition
+
+```
+src/
+  pages/
+    SettingsPage.jsx
+  components/
+    settings/
+      TimerSettingsSection.jsx      # work sprint / break duration + both auto-start toggles
+      CelebrationSettingsSection.jsx # success screen / gif / sound toggles
+  hooks/
+    useSettings.js                  # single point of contact for all profiles.settings reads/writes
+```
+
+**Refactor note:** `useSettings.js` replaces the inline `profiles.update()` call that §5 originally put directly in the Active Session Screen for the timer interval. That write moves into this hook so there's one place managing `profiles.settings`, not two — same lesson as the Phase 1 sort-order bug (an invariant enforced in one place and not another is a bug waiting to happen).
+
+### A3. Break Timer Behavior
+
+- When the work sprint timer hits zero: if `auto_start_breaks` is `true`, the break countdown (`default_break_minutes`) starts automatically; if `false`, show a "Start Break" prompt instead.
+- When the break timer hits zero: if `auto_start_next_sprint` is `true`, the next work sprint starts automatically; if `false`, return to a ready state awaiting manual start.
+- **End Session stays fully manual and separate from this cycle**, confirmed per Jeffrey's decision 2026-08-20 — auto-transitioning between work/break does **not** fire the `execution_sessions`/`last_touched_at`/`streak_log` writes. Those only fire on an explicit End Session tap, regardless of how many work/break cycles ran first.
+- **`duration_sec` sums work-sprint time only** — confirmed per Jeffrey 2026-08-20. Break time is excluded from the execution log; it isn't work on the task.
+
+### A4. "Move to Top 3" (replaces "Swap")
+
+- Every Full List task card gets a "Move to Top 3" quick action — not limited to a picker of tasks external to the current Top 3. This resolves Jeffrey's stated tension (want both broad task access *and* a capped display): selection pool is the entire Full List, but the Top 3 display itself still never exceeds 3 slots.
+- Underlying mechanism is unchanged from the original override design — this is a UI/labeling change, not a schema change. Assigning a task to a slot still writes `top3_override_slot` / `top3_override_date`, and still displaces whatever task previously held that slot.
+- `ManualOverridePicker.jsx` is retired in favor of the per-card action; `TopThreeCard.jsx` and Full List task cards both need the "Move to Top 3" affordance.
+
+### A5. Celebration Trigger
+
+- Fires on marking a task **done** (`status: 'done'`), not on ending a session — these are different moments (a session can end without the task being finished). Confirmed per Jeffrey 2026-08-20.
+- Add an explicit "Mark Complete" action on the Active Session Screen that sets `status: 'done'` and triggers the celebration sequence (success screen, gif, sound — each independently toggleable per `profiles.settings`), separate from End Session.
+
+### A6. Visual Design System
+
+Established via Claude Design (Anthropic Labs), 2026-08-21. The project's design system was initially misconfigured — it inherited a generic newspaper/editorial system ("Broadsheet," with CMYK-separation effects, halftone textures, serif display type) from a different, unrelated Claude Design project, since design systems default to the workspace's existing system unless a new one is explicitly built. This has been corrected: Fused now has its own bespoke system, built directly from the `ccjeff714/Fused-App` repo.
+
+**Tokens:**
+- Palette: slate-blue + forest-green ramps, light and dark mode. No pink/magenta, no process-yellow, no print/editorial effects anywhere.
+- Typography: Figtree throughout; IBM Plex Mono reserved for timer digits only.
+- **Work session state:** calm background photography, green accent. **Break state:** solid blue, no imagery, softer type. This pairing (green = active work, teal/blue = calm rest) gives the palette's two core colors a functional meaning rather than a decorative one.
+- No logo exists in the repo — wordmark is plain type with an accent dot, not an invented mark. No session background photo exists yet either; `SessionField` takes a `backgroundImage` prop and falls back to a green gradient until one is supplied (see A6a below).
+- Icons are vendored Lucide SVGs (`assets/icons/`), since the repo ships no icon library — inlined so they render at any serving path and inherit `currentColor`.
+
+**A6a. Session background image upload — schema already applied directly (2026-08-21):**
+
+A private Supabase Storage bucket (`session-backgrounds`) with four RLS policies (select/insert/update/delete, each scoped to `(storage.foldername(name))[1] = auth.uid()::text`) is live. Upload path convention: `{user_id}/filename.jpg`. No `profiles.settings` migration was needed for the URL itself — `session_background_url` simply won't exist in `settings` until a user uploads something; the app should treat its absence as the normal case and fall back to the green gradient, not an error state. Claude Code's job here: build the actual upload control (on the Settings page) and wire `SessionField`'s `backgroundImage` prop to read from it.
+
+### A7. Priority Tier Colors — Independent Tokens
+
+The first design pass aliased tier colors directly to the brand palette (`--tier-high: var(--blue-500)`, `--tier-medium: var(--green-400)`), which collided with the work-session and streak colors — one token (`green-400`) was carrying three unrelated meanings at once (medium priority, active work session, engaged streak). Fixed 2026-08-21: all four tiers now have their own independent tokens, not aliased to blue/green at all:
+
+| Tier | Color |
+|---|---|
+| Critical | True saturated red (not desaturated/softened) |
+| High | Orange |
+| Medium | Yellow |
+| Low | Gray |
+
+`--streak` stays on the green ramp thematically (pairs with the work-session state) but as its own fully independent token, never shared with a tier color again.
+
+### A8. Card-Click Interaction Pattern
+
+Clicking a task card behaves differently depending on which screen it's on:
+
+- **Today (Top 3) screen:** opens a right-side sliding panel (Focus To-Do–style), showing title, due date, area, priority tier, notes, status, and a short execution history pulled from `execution_sessions` — all editable in place.
+- **Every other screen** (Full List, This Week, Planned, Completed): opens a lightweight edit modal with title, due date, area, priority tier, notes, and status — no execution history, no panel treatment.
+
+This is a deliberate partial pull-forward of Phase 4's Task Detail/Layered Context screen, scoped only to the Today view for now — the fuller Layered Context expand/collapse treatment for all screens remains Phase 4 scope.
+
+**Known interaction bug, fix requested 2026-08-21:** interacting with a field inside either the panel or the modal was closing it entirely, rather than just not persisting the edit (expected, since Design prototypes have no real backend). Likely cause: a click-outside-to-close handler catching clicks that originate inside the panel/modal. Fix: stop that propagation so fields remain interactive while open.
+
+### A9. Calendar Picker Consistency
+
+The calendar date-picker used for Due Date in the Capture modal must be reused everywhere a Due Date or Planned Date field appears — the Capture modal, the lightweight edit modal, and the Today panel — not just in Capture, where it originally only appeared.
+
+### Verification Checklist Additions
+
+- [ ] `useSettings.js` is the only place that reads/writes `profiles.settings` — no duplicate inline calls
+- [ ] Settings page renders and persists all six original keys correctly
+- [ ] Auto-start toggles control timer transitions only — End Session writes remain fully manual regardless of toggle state
+- [ ] `duration_sec` excludes break time
+- [ ] "Move to Top 3" is available from every Full List card, still caps the Home screen display at 3
+- [ ] Celebration fires on task completion (status → done), not on session end
+- [ ] No Broadsheet/print-editorial styling remains anywhere (no CMYK effects, no halftone, no serif display type)
+- [ ] All four priority-tier colors are independent tokens, not aliased to `--blue-*`/`--green-*`; critical is true saturated red
+- [ ] `--streak` is its own independent token, not shared with any tier color
+- [ ] Session background upload control exists on Settings page, writes to the `session-backgrounds` bucket under `{user_id}/`, and `SessionField` correctly falls back to the green gradient when no image is set
+- [ ] Today screen cards open the right-side panel; all other screens open the lightweight edit modal — confirm the split, not a single shared pattern
+- [ ] Editing a field inside the panel/modal no longer closes it
+- [ ] Calendar picker appears consistently for Due Date and Planned Date in Capture, the edit modal, and the Today panel
