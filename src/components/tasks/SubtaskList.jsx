@@ -9,12 +9,18 @@ export default function SubtaskList({ subtasks, onChange }) {
   const [draft, setDraft] = useState('')
   const items = subtasks ?? []
 
-  const addItem = (e) => {
-    e.preventDefault()
+  const addItem = () => {
     const text = draft.trim()
     if (!text) return
     onChange([...items, { text, done: false }])
     setDraft('')
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addItem()
+    }
   }
 
   const toggleItem = (index) => {
@@ -55,17 +61,23 @@ export default function SubtaskList({ subtasks, onChange }) {
         </div>
       ))}
 
-      <form className="subtask-add-row" onSubmit={addItem}>
+      {/* Deliberately not a <form> — this renders inside TaskEditModal's
+          own outer <form>, and a nested <form> is invalid HTML whose
+          submit routing isn't reliable across browsers (the root cause of
+          the "Add just refreshes the page, nothing saved" bug). See
+          RoleSelect.jsx for the same fix applied to role creation. */}
+      <div className="subtask-add-row">
         <input
           type="text"
           placeholder="Add a checklist item"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
-        <button type="submit" className="btn btn-outline btn-sm" disabled={!draft.trim()}>
+        <button type="button" className="btn btn-outline btn-sm" disabled={!draft.trim()} onClick={addItem}>
           <IconPlus size={14} />
         </button>
-      </form>
+      </div>
     </div>
   )
 }

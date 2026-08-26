@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   IconSun,
   IconMoon,
@@ -10,6 +11,9 @@ import {
   IconSettings,
   IconPlus,
 } from '../icons'
+import { useRoles } from '../../hooks/useRoles'
+import { useProjects } from '../../hooks/useProjects'
+import ProjectCreateModal from '../projects/ProjectCreateModal'
 
 const LISTS_NAV = [
   { id: 'today', label: 'Today', Icon: IconToday, dot: true },
@@ -43,6 +47,15 @@ export default function AppShell({
   route, onNavigate, isDark, onToggleTheme, session, chromeVisible, children,
   onOpenCapture, showCapture,
 }) {
+  // Owns its own data for the sidebar's global "+ New Project" entry point
+  // (Phase5_Handoff_Spec.md §10's second entry point, added this round) —
+  // independent of whatever page-level useProjects/useRoles instances
+  // exist, since this action isn't tied to a specific already-rendered
+  // list the way quick capture is.
+  const { roles } = useRoles(session)
+  const { createProject } = useProjects(session)
+  const [projectModalOpen, setProjectModalOpen] = useState(false)
+
   if (!chromeVisible) {
     return <div className="app-shell">{children}</div>
   }
@@ -71,7 +84,22 @@ export default function AppShell({
         <nav className="sidebar-nav">
           <div className="eyebrow" style={{ marginBottom: 8 }}>Workspace</div>
           {WORKSPACE_NAV.map((item) => (
-            <NavButton key={item.id} item={item} active={route === item.id} onClick={() => onNavigate(item.id)} />
+            item.id === 'projects' ? (
+              <div key={item.id} className="nav-link-with-action">
+                <NavButton item={item} active={route === item.id} onClick={() => onNavigate(item.id)} />
+                <button
+                  type="button"
+                  className="nav-link-action"
+                  onClick={() => setProjectModalOpen(true)}
+                  aria-label="New project"
+                  title="New project"
+                >
+                  <IconPlus size={14} />
+                </button>
+              </div>
+            ) : (
+              <NavButton key={item.id} item={item} active={route === item.id} onClick={() => onNavigate(item.id)} />
+            )
           ))}
         </nav>
 
@@ -85,6 +113,14 @@ export default function AppShell({
       </aside>
 
       <div className="app-content">{children}</div>
+
+      {projectModalOpen && (
+        <ProjectCreateModal
+          roles={roles}
+          onCreate={createProject}
+          onClose={() => setProjectModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

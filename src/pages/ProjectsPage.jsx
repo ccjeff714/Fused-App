@@ -5,13 +5,15 @@ import { useRoles } from '../hooks/useRoles'
 import { statusLabel } from '../lib/taskDisplay'
 import TaskEditModal from '../components/tasks/TaskEditModal'
 import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
+import ProjectCreateModal from '../components/projects/ProjectCreateModal'
 import { IconChevronRight, IconChevronLeft, IconPlay, IconPlus } from '../components/icons'
 
 // Roles as collapsible top-level sections, Projects nested inside each
-// (Phase5_Handoff_Spec.md §4 — Direction 7d prior art). Project creation
-// lives here, scoped per role section, since a Project requires a Role
-// (§3) and neither spec defines a Project-creation UI elsewhere — see the
-// final report for this scope note.
+// (Phase5_Handoff_Spec.md §4 — Direction 7d prior art). Inline project
+// creation here is one of two entry points (Phase5_Handoff_Spec.md §10)
+// — the other is the sidebar's global "+" next to Projects (AppShell) —
+// sharing components/projects/ProjectCreateModal.jsx. This one locks Role
+// to whichever section it was opened from.
 export default function ProjectsPage({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
   const { tasks, createTask, updateTask } = useTasks(session)
   const { projects, createProject } = useProjects(session)
@@ -19,7 +21,6 @@ export default function ProjectsPage({ session, startSession, onSessionStarted, 
   const [openRoleIds, setOpenRoleIds] = useState(() => new Set())
   const [focusProjectId, setFocusProjectId] = useState(null)
   const [newProjectRoleId, setNewProjectRoleId] = useState(null)
-  const [newProjectName, setNewProjectName] = useState('')
   const [openTaskId, setOpenTaskId] = useState(null)
 
   const openTask = tasks.find((t) => t.id === openTaskId) ?? null
@@ -42,17 +43,6 @@ export default function ProjectsPage({ session, startSession, onSessionStarted, 
       if (next.has(roleId)) next.delete(roleId); else next.add(roleId)
       return next
     })
-  }
-
-  const handleCreateProject = async (e, roleId) => {
-    e.preventDefault()
-    const name = newProjectName.trim()
-    if (!name) return
-    const { error } = await createProject({ name, role_id: roleId })
-    if (!error) {
-      setNewProjectName('')
-      setNewProjectRoleId(null)
-    }
   }
 
   const handleStart = async (task) => {
@@ -157,29 +147,14 @@ export default function ProjectsPage({ session, startSession, onSessionStarted, 
                     </div>
                   ))}
 
-                  {newProjectRoleId === role.id ? (
-                    <form onSubmit={(e) => handleCreateProject(e, role.id)} style={{ display: 'flex', gap: 8 }}>
-                      <input
-                        type="text"
-                        autoFocus
-                        placeholder="New project name"
-                        value={newProjectName}
-                        onChange={(e) => setNewProjectName(e.target.value)}
-                        style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', color: 'var(--text-primary)', font: 'inherit' }}
-                      />
-                      <button type="submit" className="btn btn-outline btn-sm" disabled={!newProjectName.trim()}>Add</button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewProjectRoleId(null)}>Cancel</button>
-                    </form>
-                  ) : (
-                    <button
-                      type="button"
-                      className="link-button"
-                      onClick={() => { setNewProjectRoleId(role.id); setNewProjectName('') }}
-                    >
-                      <IconPlus size={14} />
-                      <span>New project</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setNewProjectRoleId(role.id)}
+                  >
+                    <IconPlus size={14} />
+                    <span>New project</span>
+                  </button>
 
                   {role.loose.length > 0 && (
                     <div className="loose-tasks">
@@ -220,6 +195,16 @@ export default function ProjectsPage({ session, startSession, onSessionStarted, 
           projects={projects}
           roles={roles}
           onCreateRole={createRole}
+        />
+      )}
+
+      {newProjectRoleId && (
+        <ProjectCreateModal
+          roles={roles}
+          lockedRoleId={newProjectRoleId}
+          lockedRoleName={roles.find((r) => r.id === newProjectRoleId)?.name}
+          onCreate={createProject}
+          onClose={() => setNewProjectRoleId(null)}
         />
       )}
     </main>

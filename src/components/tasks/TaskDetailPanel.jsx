@@ -85,6 +85,7 @@ export default function TaskDetailPanel({ task, projects, roles, onUpdate, onCre
             hint={roleLock.roleHint}
             opacity={roleLock.roleOpacity}
             onCreateRole={onCreateRole}
+            hideLabel
           />
 
           <span className="panel-grid-label">Priority</span>

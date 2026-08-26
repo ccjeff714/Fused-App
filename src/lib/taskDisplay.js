@@ -27,6 +27,19 @@ export function statusLabel(status) {
   return STATUS_LABELS[status] ?? status
 }
 
+// projects.status — distinct domain from tasks.status above, same
+// label-mapping-only rule (stored values active/on_hold/done unchanged).
+export const PROJECT_STATUSES = ['active', 'on_hold', 'done']
+export const PROJECT_STATUS_LABELS = {
+  active: 'Active',
+  on_hold: 'On hold',
+  done: 'Done',
+}
+
+export function projectStatusLabel(status) {
+  return PROJECT_STATUS_LABELS[status] ?? status
+}
+
 export function formatDueDate(dueDate) {
   return dueDate || 'No due date'
 }
