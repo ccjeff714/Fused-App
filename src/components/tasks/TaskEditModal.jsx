@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { computeRoleLock } from '../../lib/roleLock'
+import { tierInfo } from '../../lib/taskDisplay'
 import RoleSelect from './RoleSelect'
 import SubtaskList from './SubtaskList'
 
@@ -83,7 +84,7 @@ export default function TaskEditModal({ task, projects, roles, onSave, onCancel,
             <label className="field">
               <span>Priority tier</span>
               <select className="select" value={fields.priority_tier} onChange={setField('priority_tier')}>
-                {PRIORITY_TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
+                {PRIORITY_TIERS.map((t) => <option key={t} value={t}>{tierInfo(t).label}</option>)}
               </select>
             </label>
             <label className="field">

@@ -8,6 +8,7 @@ import {
   IconFolder,
   IconListMenu,
   IconSettings,
+  IconPlus,
 } from '../icons'
 
 const LISTS_NAV = [
@@ -38,13 +39,22 @@ function NavButton({ item, active, onClick }) {
   )
 }
 
-export default function AppShell({ route, onNavigate, isDark, onToggleTheme, session, chromeVisible, children }) {
+export default function AppShell({
+  route, onNavigate, isDark, onToggleTheme, session, chromeVisible, children,
+  onOpenCapture, showCapture,
+}) {
   if (!chromeVisible) {
     return <div className="app-shell">{children}</div>
   }
 
   return (
     <div className="app-shell">
+      {showCapture && (
+        <button type="button" className="global-capture-btn btn btn-primary" onClick={onOpenCapture}>
+          <IconPlus size={17} />
+          <span>Capture task</span>
+        </button>
+      )}
       <aside className="app-sidebar">
         <div className="app-logo">
           <span>Fused</span>

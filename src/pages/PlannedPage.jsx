@@ -5,12 +5,13 @@ import { useRoles } from '../hooks/useRoles'
 import { isoDaysFromToday } from '../lib/date'
 import PlannedRow from '../components/tasks/PlannedRow'
 import TaskEditModal from '../components/tasks/TaskEditModal'
+import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
 
 // Grouped by planned_date (Overdue/Today/Tomorrow/Next week/Unscheduled) —
 // distinct from This Week (grouped by due_date) and Full List (flat,
 // filterable). No filter bar, per Phase2_Handoff_Spec.md's chat correction.
-export default function PlannedPage({ session, startSession, onSessionStarted }) {
-  const { tasks, loading, error, updateTask } = useTasks(session)
+export default function PlannedPage({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
+  const { tasks, loading, error, createTask, updateTask } = useTasks(session)
   const { projects } = useProjects(session)
   const { roles, createIfNew: createRole } = useRoles(session)
   const [openTaskId, setOpenTaskId] = useState(null)
@@ -92,6 +93,16 @@ export default function PlannedPage({ session, startSession, onSessionStarted })
           roles={roles}
           onSave={updateTask}
           onCancel={() => setOpenTaskId(null)}
+          onCreateRole={createRole}
+        />
+      )}
+
+      {captureOpen && (
+        <TaskCaptureModal
+          onClose={onCloseCapture}
+          onCreate={createTask}
+          projects={projects}
+          roles={roles}
           onCreateRole={createRole}
         />
       )}

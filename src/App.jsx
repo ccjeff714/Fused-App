@@ -19,6 +19,7 @@ export default function App() {
   const [route, setRoute] = useState('today')
   const sessionLifecycle = useSession(session)
   const [activeTask, setActiveTask] = useState(null)
+  const [captureOpen, setCaptureOpen] = useState(false)
 
   if (loading) return <p>Loading...</p>
 
@@ -49,7 +50,14 @@ export default function App() {
     )
   }
 
-  const sessionProps = { session, startSession, onSessionStarted: handleSessionStarted }
+  // Quick capture is shared shell chrome (AppShell renders the button) —
+  // each page still owns its own TaskCaptureModal + data hooks, just
+  // controlled via these props, so newly created tasks land in that
+  // page's own already-fetched list instead of going stale.
+  const sessionProps = {
+    session, startSession, onSessionStarted: handleSessionStarted,
+    captureOpen, onCloseCapture: () => setCaptureOpen(false),
+  }
 
   let content
   switch (route) {
@@ -63,7 +71,7 @@ export default function App() {
       content = <FullListPage {...sessionProps} />
       break
     case 'completed':
-      content = <FullListPage {...sessionProps} initialStatusFilter="done" />
+      content = <FullListPage {...sessionProps} initialStatusFilter="done" isCompletedEntry />
       break
     case 'projects':
       content = <ProjectsPage {...sessionProps} />
@@ -84,6 +92,8 @@ export default function App() {
       onToggleTheme={toggleTheme}
       session={session}
       chromeVisible
+      onOpenCapture={() => setCaptureOpen(true)}
+      showCapture={route !== 'settings'}
     >
       {content}
     </AppShell>

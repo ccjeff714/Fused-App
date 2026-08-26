@@ -1,11 +1,11 @@
 import { formatDueDate, tierInfo } from '../../lib/taskDisplay'
 import { IconCalendar, IconPlay } from '../icons'
 
-export default function TopThreeCard({ task, slot, onStart, onSwap }) {
+export default function TopThreeCard({ task, slot, onStart, onSwap, onOpen }) {
   const tier = tierInfo(task.priority_tier)
 
   return (
-    <div className="task-card" style={{ borderLeftColor: tier.dot }}>
+    <div className="task-card" style={{ borderLeftColor: tier.dot }} onClick={() => onOpen(task)}>
       <span className="task-card-slot tnum">{slot}</span>
       <div className="task-card-main">
         <div className="task-card-title">{task.title}</div>
@@ -20,10 +20,10 @@ export default function TopThreeCard({ task, slot, onStart, onSwap }) {
           </span>
         </div>
       </div>
-      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onSwap(slot)}>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); onSwap(slot) }}>
         Swap
       </button>
-      <button type="button" className="btn btn-progress" onClick={() => onStart(task)}>
+      <button type="button" className="btn btn-progress" onClick={(e) => { e.stopPropagation(); onStart(task) }}>
         <IconPlay size={16} />
         <span>Start</span>
       </button>

@@ -1,12 +1,10 @@
 import { useState, useMemo } from 'react'
+import { tierInfo, statusLabel } from '../../lib/taskDisplay'
 import TaskCard from './TaskCard'
 import TaskEditModal from './TaskEditModal'
 
 const STATUSES = ['not_started', 'in_progress', 'blocked', 'done']
 const PRIORITY_TIERS = ['critical', 'high_priority', 'medium_priority', 'low_priority']
-
-const STATUS_LABELS = { all: 'All', not_started: 'Not started', in_progress: 'In progress', blocked: 'Blocked', done: 'Done' }
-const TIER_LABELS = { all: 'All', critical: 'Critical', high_priority: 'High', medium_priority: 'Medium', low_priority: 'Low' }
 
 export default function TaskListView({
   tasks, loading, error, projects, roles, onUpdate, onDelete, onCreateRole,
@@ -53,7 +51,7 @@ export default function TaskListView({
                 className={statusFilter === s ? 'filter-chip active' : 'filter-chip'}
                 onClick={() => onStatusFilterChange(s)}
               >
-                {STATUS_LABELS[s]}
+                {s === 'all' ? 'All' : statusLabel(s)}
               </button>
             ))}
           </div>
@@ -68,7 +66,7 @@ export default function TaskListView({
                 className={priorityFilter === t ? 'filter-chip active' : 'filter-chip'}
                 onClick={() => setPriorityFilter(t)}
               >
-                {TIER_LABELS[t]}
+                {t === 'all' ? 'All' : tierInfo(t).label}
               </button>
             ))}
           </div>

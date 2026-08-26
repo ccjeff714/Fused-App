@@ -9,14 +9,12 @@ import AlsoTodayCard from './AlsoTodayCard'
 import ManualOverridePicker from './ManualOverridePicker'
 import TaskCaptureModal from '../tasks/TaskCaptureModal'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
-import { IconPlus } from '../icons'
 
-export default function HomeSessionScreen({ session, startSession, onSessionStarted }) {
+export default function HomeSessionScreen({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
   const { tasks, createTask, updateTask } = useTasks(session)
   const { topThree, loading, error, setOverride, refetch } = useTopThree(session)
   const { projects } = useProjects(session)
   const { roles, createIfNew: createRole } = useRoles(session)
-  const [captureOpen, setCaptureOpen] = useState(false)
   const [swapSlot, setSwapSlot] = useState(null)
   const [panelTaskId, setPanelTaskId] = useState(null)
   const [starting, setStarting] = useState(false)
@@ -54,16 +52,10 @@ export default function HomeSessionScreen({ session, startSession, onSessionStar
 
   return (
     <main className="screen">
-      <header className="screen-header">
-        <div>
-          <div className="eyebrow" style={{ marginBottom: 12 }}>Today</div>
-          <h1 className="screen-title">Today's Top 3</h1>
-          <p className="screen-subtitle">Three tasks, chosen by due date and priority. Start one and everything else gets out of the way.</p>
-        </div>
-        <button type="button" className="btn btn-primary" onClick={() => setCaptureOpen(true)}>
-          <IconPlus size={17} />
-          <span>Capture task</span>
-        </button>
+      <header>
+        <div className="eyebrow" style={{ marginBottom: 12 }}>Today</div>
+        <h1 className="screen-title">Today's Top 3</h1>
+        <p className="screen-subtitle">Three tasks, chosen by due date and priority. Start one and everything else gets out of the way.</p>
       </header>
 
       {error && <p className="error-text">{error}</p>}
@@ -81,6 +73,7 @@ export default function HomeSessionScreen({ session, startSession, onSessionStar
               slot={i + 1}
               onStart={handleStart}
               onSwap={setSwapSlot}
+              onOpen={(t) => setPanelTaskId(t.id)}
             />
           ))}
         </div>
@@ -107,7 +100,7 @@ export default function HomeSessionScreen({ session, startSession, onSessionStar
 
       {captureOpen && (
         <TaskCaptureModal
-          onClose={() => setCaptureOpen(false)}
+          onClose={onCloseCapture}
           onCreate={handleCreate}
           projects={projects}
           roles={roles}

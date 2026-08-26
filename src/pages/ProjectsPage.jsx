@@ -3,6 +3,7 @@ import { useTasks } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { useRoles } from '../hooks/useRoles'
 import TaskEditModal from '../components/tasks/TaskEditModal'
+import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
 import { IconChevronRight, IconChevronLeft, IconPlay, IconPlus } from '../components/icons'
 
 // Roles as collapsible top-level sections, Projects nested inside each
@@ -10,8 +11,8 @@ import { IconChevronRight, IconChevronLeft, IconPlay, IconPlus } from '../compon
 // lives here, scoped per role section, since a Project requires a Role
 // (§3) and neither spec defines a Project-creation UI elsewhere — see the
 // final report for this scope note.
-export default function ProjectsPage({ session, startSession, onSessionStarted }) {
-  const { tasks, updateTask } = useTasks(session)
+export default function ProjectsPage({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
+  const { tasks, createTask, updateTask } = useTasks(session)
   const { projects, createProject } = useProjects(session)
   const { roles, createIfNew: createRole } = useRoles(session)
   const [openRoleIds, setOpenRoleIds] = useState(() => new Set())
@@ -108,6 +109,16 @@ export default function ProjectsPage({ session, startSession, onSessionStarted }
             onCreateRole={createRole}
           />
         )}
+
+        {captureOpen && (
+          <TaskCaptureModal
+            onClose={onCloseCapture}
+            onCreate={createTask}
+            projects={projects}
+            roles={roles}
+            onCreateRole={createRole}
+          />
+        )}
       </main>
     )
   }
@@ -197,6 +208,16 @@ export default function ProjectsPage({ session, startSession, onSessionStarted }
           roles={roles}
           onSave={updateTask}
           onCancel={() => setOpenTaskId(null)}
+          onCreateRole={createRole}
+        />
+      )}
+
+      {captureOpen && (
+        <TaskCaptureModal
+          onClose={onCloseCapture}
+          onCreate={createTask}
+          projects={projects}
+          roles={roles}
           onCreateRole={createRole}
         />
       )}

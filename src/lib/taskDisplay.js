@@ -2,11 +2,14 @@
 // previously duplicated across TaskCard/TopThreeCard, so a tier's label or
 // color token can't drift out of sync between cards (same lesson as the
 // Phase 1 sort-order fix in lib/ranking.js).
+// Display labels only — stored values (critical/high_priority/
+// medium_priority/low_priority) are unchanged everywhere they're written
+// to or read from Supabase; this is purely a label-mapping layer.
 export const TIERS = {
   critical: { label: 'Critical', dot: 'var(--tier-critical)' },
-  high_priority: { label: 'High priority', dot: 'var(--tier-high)' },
-  medium_priority: { label: 'Medium priority', dot: 'var(--tier-medium)' },
-  low_priority: { label: 'Low priority', dot: 'var(--tier-low)' },
+  high_priority: { label: 'High', dot: 'var(--tier-high)' },
+  medium_priority: { label: 'Medium', dot: 'var(--tier-medium)' },
+  low_priority: { label: 'Low', dot: 'var(--tier-low)' },
 }
 
 export const STATUS_LABELS = {

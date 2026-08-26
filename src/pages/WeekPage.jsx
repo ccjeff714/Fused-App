@@ -5,6 +5,7 @@ import { useRoles } from '../hooks/useRoles'
 import { isoDaysFromToday, weekdayName, formatLongDate } from '../lib/date'
 import WeekCard from '../components/tasks/WeekCard'
 import TaskEditModal from '../components/tasks/TaskEditModal'
+import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
 
 function buildDayGroups() {
   const groups = []
@@ -18,24 +19,24 @@ function buildDayGroups() {
 
 const DAY_GROUPS = buildDayGroups()
 
-export default function WeekPage({ session, startSession, onSessionStarted }) {
-  const { tasks, loading, error, updateTask } = useTasks(session)
+export default function WeekPage({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
+  const { tasks, loading, error, createTask, updateTask } = useTasks(session)
   const { projects } = useProjects(session)
   const { roles, createIfNew: createRole } = useRoles(session)
   const [openTaskId, setOpenTaskId] = useState(null)
 
   const openTask = tasks.find((t) => t.id === openTaskId) ?? null
 
+  // Grouped by due_date only — an item with no due date has no claim to
+  // "this week" (confirmed manual-test fix; previously an Unscheduled
+  // bucket recreated the "identical to Full List" problem this screen was
+  // built to solve).
   const groups = useMemo(() => {
     const notDone = tasks.filter((t) => t.status !== 'done')
-    const withDay = DAY_GROUPS.map((g) => ({
+    return DAY_GROUPS.map((g) => ({
       ...g,
       tasks: notDone.filter((t) => t.due_date === g.iso),
     }))
-    const unscheduled = notDone.filter((t) => !t.due_date)
-    return unscheduled.length > 0
-      ? [...withDay, { iso: null, label: 'Unscheduled', date: 'Pull one in if the week opens up', tasks: unscheduled }]
-      : withDay
   }, [tasks])
 
   const visibleGroups = groups.filter((g) => g.tasks.length > 0)
@@ -62,7 +63,7 @@ export default function WeekPage({ session, startSession, onSessionStarted }) {
       ) : (
         <div className="week-section">
           {visibleGroups.map((group) => (
-            <section key={group.iso ?? 'unscheduled'}>
+            <section key={group.iso}>
               <div className="week-group-header">
                 <span className="week-group-title">{group.label}</span>
                 <span className="week-group-date">{group.date}</span>
@@ -93,6 +94,16 @@ export default function WeekPage({ session, startSession, onSessionStarted }) {
           roles={roles}
           onSave={updateTask}
           onCancel={() => setOpenTaskId(null)}
+          onCreateRole={createRole}
+        />
+      )}
+
+      {captureOpen && (
+        <TaskCaptureModal
+          onClose={onCloseCapture}
+          onCreate={createTask}
+          projects={projects}
+          roles={roles}
           onCreateRole={createRole}
         />
       )}

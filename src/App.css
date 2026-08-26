@@ -112,6 +112,16 @@
   overflow-x: clip;
 }
 
+/* Shared quick-capture button — lives once in the shell chrome so every
+   content screen has it "always reachable" without each page rendering
+   its own copy (a screen that forgets to add it is no longer possible). */
+.global-capture-btn {
+  position: fixed;
+  top: 32px;
+  right: 40px;
+  z-index: 20;
+}
+
 .screen {
   min-height: 100dvh;
   box-sizing: border-box;
@@ -120,13 +130,6 @@
   flex-direction: column;
   gap: 40px;
   overflow-y: auto;
-}
-
-.screen-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 32px;
 }
 
 .screen-title { font-size: var(--text-4xl); margin-bottom: 12px; }
@@ -438,7 +441,6 @@
   transition: opacity var(--duration-base) var(--ease-standard);
 }
 
-.settings-nested.disabled { opacity: 0.5; pointer-events: none; }
 .settings-nested .settings-row-title,
 .settings-nested .settings-row span:first-child { color: var(--text-secondary); font-size: var(--text-md); }
 
@@ -733,7 +735,13 @@
 .modal h2 { font-size: var(--text-2xl); }
 
 .field { display: flex; flex-direction: column; gap: 8px; }
-.field-label-row { display: flex; align-items: baseline; gap: 6px; font-size: var(--text-sm); color: var(--text-secondary); }
+/* Every field's label is the first child span, whether it's a plain label
+   or the field-label-row wrapper (label + hint) — one rule keeps every
+   field's label the same font/size/color instead of the two diverging,
+   since only fields with a hint previously picked up field-label-row's
+   typography. */
+.field > span:first-child { font-size: var(--text-sm); color: var(--text-secondary); }
+.field-label-row { display: flex; align-items: baseline; gap: 6px; }
 .field-hint { font-size: var(--text-xs); color: var(--text-tertiary); }
 
 .field input,

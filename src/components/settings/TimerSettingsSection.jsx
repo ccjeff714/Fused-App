@@ -3,9 +3,10 @@ import Switch from './Switch'
 const WORK_OPTIONS = [5, 10, 15, 20, 25, 30]
 const BREAK_OPTIONS = [5, 10, 15]
 
-// Work sprint / break duration + both auto-start toggles, all nested under
-// and disabled alongside the pomodoro_enabled master toggle (spec A3a —
-// none of these mean anything in stopwatch mode).
+// Work sprint / break duration + both auto-start toggles — fully hidden
+// (not just grayed out) when pomodoro_enabled is off, per manual-test
+// feedback: none of these mean anything in stopwatch mode, so showing
+// them disabled was still visual noise.
 export default function TimerSettingsSection({ settings, updateSettings }) {
   const pomodoroOn = settings.pomodoro_enabled
 
@@ -20,38 +21,38 @@ export default function TimerSettingsSection({ settings, updateSettings }) {
         <Switch checked={pomodoroOn} onChange={(v) => updateSettings({ pomodoro_enabled: v })} />
       </div>
 
-      <div className={pomodoroOn ? 'settings-nested' : 'settings-nested disabled'}>
-        <div className="settings-row">
-          <span>Work sprint</span>
-          <select
-            className="select"
-            value={settings.default_session_minutes}
-            onChange={(e) => updateSettings({ default_session_minutes: Number(e.target.value) })}
-            disabled={!pomodoroOn}
-          >
-            {WORK_OPTIONS.map((m) => <option key={m} value={m}>{m} min</option>)}
-          </select>
+      {pomodoroOn && (
+        <div className="settings-nested">
+          <div className="settings-row">
+            <span>Work sprint</span>
+            <select
+              className="select"
+              value={settings.default_session_minutes}
+              onChange={(e) => updateSettings({ default_session_minutes: Number(e.target.value) })}
+            >
+              {WORK_OPTIONS.map((m) => <option key={m} value={m}>{m} min</option>)}
+            </select>
+          </div>
+          <div className="settings-row">
+            <span>Break</span>
+            <select
+              className="select"
+              value={settings.default_break_minutes}
+              onChange={(e) => updateSettings({ default_break_minutes: Number(e.target.value) })}
+            >
+              {BREAK_OPTIONS.map((m) => <option key={m} value={m}>{m} min</option>)}
+            </select>
+          </div>
+          <div className="settings-row">
+            <span>Start breaks automatically</span>
+            <Switch checked={settings.auto_start_breaks} onChange={(v) => updateSettings({ auto_start_breaks: v })} />
+          </div>
+          <div className="settings-row">
+            <span>Start work sprints automatically</span>
+            <Switch checked={settings.auto_start_next_sprint} onChange={(v) => updateSettings({ auto_start_next_sprint: v })} />
+          </div>
         </div>
-        <div className="settings-row">
-          <span>Break</span>
-          <select
-            className="select"
-            value={settings.default_break_minutes}
-            onChange={(e) => updateSettings({ default_break_minutes: Number(e.target.value) })}
-            disabled={!pomodoroOn}
-          >
-            {BREAK_OPTIONS.map((m) => <option key={m} value={m}>{m} min</option>)}
-          </select>
-        </div>
-        <div className="settings-row">
-          <span>Start breaks automatically</span>
-          <Switch checked={settings.auto_start_breaks} onChange={(v) => updateSettings({ auto_start_breaks: v })} disabled={!pomodoroOn} />
-        </div>
-        <div className="settings-row">
-          <span>Start work sprints automatically</span>
-          <Switch checked={settings.auto_start_next_sprint} onChange={(v) => updateSettings({ auto_start_next_sprint: v })} disabled={!pomodoroOn} />
-        </div>
-      </div>
+      )}
     </>
   )
 }

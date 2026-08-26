@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { computeRoleLock } from '../../lib/roleLock'
+import { tierInfo } from '../../lib/taskDisplay'
 import RoleSelect from './RoleSelect'
 
 const AREAS = ['work']
@@ -90,7 +91,7 @@ export default function TaskCaptureModal({ onClose, onCreate, projects = [], rol
                   <input type="date" value={fields.due_date} onChange={setField('due_date')} />
                 </label>
                 <label className="field">
-                  <span className="field-label-row"><span>Planned date</span><span className="field-hint">optional</span></span>
+                  <span>Planned date</span>
                   <input type="date" value={fields.planned_date} onChange={setField('planned_date')} />
                 </label>
               </div>
@@ -99,14 +100,14 @@ export default function TaskCaptureModal({ onClose, onCreate, projects = [], rol
                 <span>Priority tier</span>
                 <select className="select" value={fields.priority_tier} onChange={setField('priority_tier')}>
                   {PRIORITY_TIERS.map((tier) => (
-                    <option key={tier} value={tier}>{tier}</option>
+                    <option key={tier} value={tier}>{tierInfo(tier).label}</option>
                   ))}
                 </select>
               </label>
 
               <div className="field-row-2">
                 <label className="field">
-                  <span className="field-label-row"><span>Project</span><span className="field-hint">optional</span></span>
+                  <span>Project</span>
                   <select
                     className="select"
                     value={fields.project_id}
@@ -121,7 +122,7 @@ export default function TaskCaptureModal({ onClose, onCreate, projects = [], rol
                   value={roleLock.roleValue}
                   onChange={(roleId) => setFields((f) => ({ ...f, role_id: roleId }))}
                   disabled={roleLock.roleLocked}
-                  hint={roleLock.roleHint}
+                  hint={roleLock.roleLocked ? roleLock.roleHint : ''}
                   opacity={roleLock.roleOpacity}
                   onCreateRole={onCreateRole}
                 />
