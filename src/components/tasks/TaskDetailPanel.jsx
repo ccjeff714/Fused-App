@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { computeRoleLock } from '../../lib/roleLock'
-import { tierInfo } from '../../lib/taskDisplay'
+import { tierInfo, statusLabel } from '../../lib/taskDisplay'
 import { useExecutionHistory } from '../../hooks/useExecutionHistory'
 import RoleSelect from './RoleSelect'
 import SubtaskList from './SubtaskList'
@@ -94,7 +94,7 @@ export default function TaskDetailPanel({ task, projects, roles, onUpdate, onCre
 
           <span className="panel-grid-label">Status</span>
           <select className="select" defaultValue={task.status ?? 'not_started'} onChange={(e) => save({ status: e.target.value })}>
-            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
           </select>
         </div>
 

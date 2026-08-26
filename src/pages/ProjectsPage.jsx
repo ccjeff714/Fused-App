@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useTasks } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { useRoles } from '../hooks/useRoles'
+import { statusLabel } from '../lib/taskDisplay'
 import TaskEditModal from '../components/tasks/TaskEditModal'
 import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
 import { IconChevronRight, IconChevronLeft, IconPlay, IconPlus } from '../components/icons'
@@ -189,7 +190,7 @@ export default function ProjectsPage({ session, startSession, onSessionStarted, 
                           <span className={task.status === 'done' ? 'list-row-title done' : ''} style={{ flex: 1, minWidth: 0 }}>
                             {task.title}
                           </span>
-                          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>{task.status}</span>
+                          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>{statusLabel(task.status)}</span>
                         </div>
                       ))}
                     </div>

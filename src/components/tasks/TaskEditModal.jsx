@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { computeRoleLock } from '../../lib/roleLock'
-import { tierInfo } from '../../lib/taskDisplay'
+import { tierInfo, statusLabel } from '../../lib/taskDisplay'
 import RoleSelect from './RoleSelect'
 import SubtaskList from './SubtaskList'
 
@@ -90,7 +90,7 @@ export default function TaskEditModal({ task, projects, roles, onSave, onCancel,
             <label className="field">
               <span>Status</span>
               <select className="select" value={fields.status} onChange={setField('status')}>
-                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </select>
             </label>
           </div>
