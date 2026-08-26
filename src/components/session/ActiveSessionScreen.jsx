@@ -1,37 +1,60 @@
-import { useState } from 'react'
-import SessionTimer from './SessionTimer'
+import { IconCheck } from '../icons'
 
-export default function ActiveSessionScreen({ session, task, executionSession, endSession, onExit }) {
-  const [ending, setEnding] = useState(false)
-  const [error, setError] = useState(null)
+const CIRC = 1005.3
 
-  const handleEndSession = async () => {
-    setEnding(true)
-    const startedAtMs = new Date(executionSession.started_at).getTime()
-    const durationSec = Math.max(0, Math.round((Date.now() - startedAtMs) / 1000))
-
-    const { error } = await endSession(executionSession.id, task.id, durationSec)
-    setEnding(false)
-    if (error) {
-      setError(`Session ended, but saving follow-up updates failed: ${error} — try again.`)
-    } else {
-      onExit()
-    }
-  }
+export default function ActiveSessionScreen({
+  task, running, timeText, progress, isStopwatch, phaseLabel, hasStarted,
+  onToggleRun, onEndSession, onMarkComplete, ending, error, backgroundUrl,
+}) {
+  const ringOffset = isStopwatch ? 0 : CIRC - CIRC * progress
+  const runLabel = running ? 'Pause' : (hasStarted ? 'Resume' : 'Start')
 
   return (
-    <div className="active-session-screen">
-      <h1>{task.title}</h1>
+    <main
+      className="session-field"
+      style={backgroundUrl ? { backgroundImage: `linear-gradient(rgba(22,36,31,0.35), rgba(22,36,31,0.55)), url(${backgroundUrl})` } : undefined}
+    >
+      <div className="session-field-scrim" />
+      <div className="session-field-inner">
+        <div className="session-top-row">
+          <div className="session-task-meta">
+            <div className="eyebrow" style={{ color: 'var(--work-accent)', marginBottom: 12 }}>Working on</div>
+            <h1 className="session-task-title">{task.title}</h1>
+            {task.notes && <p className="session-task-notes">{task.notes}</p>}
+          </div>
+        </div>
 
-      {task.notes && <p className="active-session-notes">{task.notes}</p>}
+        <div className="session-center">
+          <div className="timer-ring-wrap">
+            <svg viewBox="0 0 340 340" width="320" height="320" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx="170" cy="170" r="160" fill="none" stroke="currentColor" strokeOpacity="0.22" strokeWidth="2" />
+              {!isStopwatch && (
+                <circle
+                  cx="170" cy="170" r="160" fill="none" stroke="var(--work-accent)" strokeWidth="3"
+                  strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={ringOffset}
+                />
+              )}
+            </svg>
+            <div className="timer-ring-face">
+              <span className="tnum timer-time" style={{ fontSize: 'var(--timer-lg)' }}>{timeText}</span>
+              <span className="eyebrow" style={{ color: 'var(--work-accent)' }}>{phaseLabel}</span>
+            </div>
+          </div>
+          <button type="button" className="session-run-btn" onClick={onToggleRun}>{runLabel}</button>
+        </div>
 
-      <SessionTimer session={session} />
+        {error && <p className="error-text">{error}</p>}
 
-      {error && <p className="error-text">{error}</p>}
-
-      <button type="button" className="end-session-button" onClick={handleEndSession} disabled={ending}>
-        {ending ? 'Ending...' : 'End Session'}
-      </button>
-    </div>
+        <div className="session-action-row">
+          <button type="button" className="session-btn session-btn-end" onClick={onEndSession} disabled={ending}>
+            {ending ? 'Ending...' : 'End session'}
+          </button>
+          <button type="button" className="session-btn session-btn-complete" onClick={onMarkComplete} disabled={ending}>
+            <IconCheck size={18} />
+            <span>Mark complete</span>
+          </button>
+        </div>
+      </div>
+    </main>
   )
 }

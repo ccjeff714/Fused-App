@@ -1,0 +1,256 @@
+/* Fused design tokens — ported from the Claude Design mockup bundle
+   (project/tokens/*.css) verbatim. Two hues only: a muted slate-blue
+   (primary / interactive / break state) and a muted forest green
+   (progress / completion / streak / work state). Priority tiers are
+   independent tokens, never aliased to the brand ramps. */
+
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=IBM+Plex+Mono:wght@300;400;500&display=swap");
+
+:root {
+  /* ---- Blue ramp ---- */
+  --blue-50:  #eef4fb;
+  --blue-100: #dbe8f5;
+  --blue-200: #bcd3ea;
+  --blue-300: #94b6da;
+  --blue-400: #6a95c6;
+  --blue-500: #4a77ad;
+  --blue-600: #375f90;
+  --blue-700: #2b4c74;
+  --blue-800: #223c5c;
+  --blue-900: #1a2e46;
+
+  /* ---- Green ramp ---- */
+  --green-50:  #edf5f1;
+  --green-100: #d8eae1;
+  --green-200: #b3d5c5;
+  --green-300: #88bca5;
+  --green-400: #61a186;
+  --green-500: #44856a;
+  --green-600: #346a54;
+  --green-700: #2a5544;
+  --green-800: #224437;
+  --green-900: #1a342a;
+
+  /* ---- Neutral ramp (cool grey) ---- */
+  --neutral-0:   #ffffff;
+  --neutral-25:  #fbfcfd;
+  --neutral-50:  #f5f7f9;
+  --neutral-100: #edf0f4;
+  --neutral-200: #dfe4ea;
+  --neutral-300: #c7ced8;
+  --neutral-400: #a2abb8;
+  --neutral-500: #7c8593;
+  --neutral-600: #5e6772;
+  --neutral-700: #454c56;
+  --neutral-800: #2e333b;
+  --neutral-900: #1d2127;
+  --neutral-950: #131519;
+
+  /* ---- Priority tiers ----
+     Independent tokens: deliberately share nothing with the blue or green
+     brand ramps, so a priority dot can never be confused with the work-
+     session or streak colour. */
+  --tier-critical: #d92b1f;
+  --tier-high:     #e2760f;
+  --tier-medium:   #dda600;
+  --tier-low:      #9aa3b0;
+
+  /* ---- Semantic aliases — light ---- */
+  --surface-page:    var(--neutral-50);
+  --surface-card:    var(--neutral-0);
+  --surface-sunken:  var(--neutral-100);
+  --surface-inverse: var(--neutral-900);
+
+  --text-primary:   var(--neutral-900);
+  --text-secondary: var(--neutral-600);
+  --text-tertiary:  var(--neutral-500);
+  --text-inverse:   var(--neutral-0);
+  --text-on-accent: var(--neutral-0);
+
+  --border-subtle: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+
+  --accent:            var(--blue-600);
+  --accent-hover:      var(--blue-700);
+  --accent-pressed:    var(--blue-800);
+  --accent-quiet:      var(--blue-50);
+  --accent-quiet-text: var(--blue-700);
+
+  --progress:            var(--green-600);
+  --progress-hover:      var(--green-700);
+  --progress-quiet:      var(--green-50);
+  --progress-quiet-text: var(--green-700);
+
+  --focus-ring: var(--blue-500);
+
+  /* ---- Session states ----
+     Work = green and photographic; break = blue and flat. */
+  --work-field:   #16241f;
+  --work-ink:     #eef4f1;
+  --work-accent:  var(--green-300);
+  --break-field:  var(--blue-800);
+  --break-ink:    #eaf1f9;
+  --break-accent: var(--blue-200);
+
+  /* Streak lives on the green family thematically, but as its own token —
+     never shared with a priority tier. */
+  --streak: #44856a;
+
+  color-scheme: light;
+
+  /* ---- Typography ---- */
+  --font-sans: "Figtree", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --text-2xs: 11px;
+  --text-xs:  12px;
+  --text-sm:  13px;
+  --text-md:  15px;
+  --text-lg:  17px;
+  --text-xl:  20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 38px;
+  --text-5xl: 48px;
+
+  --timer-lg: 76px;
+  --timer-xl: 132px;
+
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.15;
+  --leading-snug:  1.35;
+  --leading-body:  1.55;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-caps: 0.09em;
+
+  /* ---- Spacing ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --gutter-page: 40px;
+  --sidebar-width: 248px;
+
+  /* ---- Radius ---- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* ---- Elevation ---- */
+  --shadow-xs: 0 1px 2px rgba(29, 33, 39, 0.05);
+  --shadow-sm: 0 1px 3px rgba(29, 33, 39, 0.07), 0 1px 2px rgba(29, 33, 39, 0.04);
+  --shadow-md: 0 4px 12px rgba(29, 33, 39, 0.08);
+  --shadow-lg: 0 18px 44px rgba(29, 33, 39, 0.16);
+
+  /* ---- Motion ---- */
+  --ease-standard: cubic-bezier(0.32, 0.08, 0.24, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 420ms;
+  --duration-celebrate: 900ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --duration-fast: 0ms; --duration-base: 0ms; --duration-slow: 0ms; --duration-celebrate: 0ms; }
+}
+
+[data-theme="dark"] {
+  --surface-page:    var(--neutral-950);
+  --surface-card:    var(--neutral-900);
+  --surface-sunken:  #171a1f;
+  --surface-inverse: var(--neutral-100);
+
+  --text-primary:   var(--neutral-100);
+  --text-secondary: var(--neutral-400);
+  --text-tertiary:  var(--neutral-500);
+  --text-inverse:   var(--neutral-950);
+  --text-on-accent: var(--neutral-0);
+
+  --border-subtle: #262b33;
+  --border-strong: #343b45;
+
+  --accent:            var(--blue-400);
+  --accent-hover:      var(--blue-300);
+  --accent-pressed:    var(--blue-200);
+  --accent-quiet:      rgba(106, 149, 198, 0.14);
+  --accent-quiet-text: var(--blue-200);
+
+  --progress:            var(--green-400);
+  --progress-hover:      var(--green-300);
+  --progress-quiet:      rgba(97, 161, 134, 0.14);
+  --progress-quiet-text: var(--green-200);
+
+  --focus-ring: var(--blue-300);
+
+  --tier-critical: #f2564a;
+  --tier-high:     #f0921f;
+  --tier-medium:   #e5b93a;
+  --tier-low:      #838c9a;
+
+  --streak: #61a186;
+
+  color-scheme: dark;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.65);
+}
+
+/* Minimal base layer: resets and the two things every surface needs. */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+  font-weight: var(--weight-regular);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+p { margin: 0; }
+
+a { color: var(--accent); text-decoration: none; text-underline-offset: 3px; }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+button, input, select, textarea { font-family: inherit; }
+
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); }
+
+::selection { background: var(--accent-quiet); color: var(--accent-quiet-text); }
+
+.tnum { font-variant-numeric: tabular-nums; }
+.eyebrow {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+}
+
+#root { min-height: 100dvh; width: 100%; }

@@ -1,24 +1,31 @@
-const PRIORITY_LABELS = {
-  critical: 'Critical',
-  high_priority: 'High priority',
-  medium_priority: 'Medium priority',
-  low_priority: 'Low priority',
-}
+import { formatDueDate, tierInfo } from '../../lib/taskDisplay'
+import { IconCalendar, IconPlay } from '../icons'
 
-export default function TopThreeCard({ task, slot, onStart, onOverride }) {
+export default function TopThreeCard({ task, slot, onStart, onSwap }) {
+  const tier = tierInfo(task.priority_tier)
+
   return (
-    <div className="top-three-card">
-      <button type="button" className="top-three-card-main" onClick={() => onStart(task)}>
-        <h3>{task.title}</h3>
+    <div className="task-card" style={{ borderLeftColor: tier.dot }}>
+      <span className="task-card-slot tnum">{slot}</span>
+      <div className="task-card-main">
+        <div className="task-card-title">{task.title}</div>
         <div className="task-card-meta">
-          <span className="due-date">{task.due_date ? task.due_date : 'no due date'}</span>
-          <span className={`badge priority-${task.priority_tier}`}>
-            {PRIORITY_LABELS[task.priority_tier] ?? task.priority_tier}
+          <span className="meta-chip">
+            <IconCalendar size={15} />
+            <span>{formatDueDate(task.due_date)}</span>
+          </span>
+          <span className="meta-chip">
+            <span className="tier-dot" style={{ background: tier.dot }} />
+            <span>{tier.label}</span>
           </span>
         </div>
-      </button>
-      <button type="button" className="link-button" onClick={() => onOverride(slot)}>
+      </div>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onSwap(slot)}>
         Swap
+      </button>
+      <button type="button" className="btn btn-progress" onClick={() => onStart(task)}>
+        <IconPlay size={16} />
+        <span>Start</span>
       </button>
     </div>
   )

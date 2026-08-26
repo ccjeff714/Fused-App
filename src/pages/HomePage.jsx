@@ -1,36 +1,14 @@
-import { useState } from 'react'
 import HomeSessionScreen from '../components/session/HomeSessionScreen'
-import ActiveSessionScreen from '../components/session/ActiveSessionScreen'
 
-export default function HomePage({ session, sessionLifecycle }) {
-  const { activeSession, startSession, endSession } = sessionLifecycle
-  const [activeTask, setActiveTask] = useState(null)
-
-  const handleSessionStarted = (task) => {
-    setActiveTask(task)
-  }
-
-  const handleExit = () => {
-    setActiveTask(null)
-  }
-
-  if (activeSession && activeTask) {
-    return (
-      <ActiveSessionScreen
-        session={session}
-        task={activeTask}
-        executionSession={activeSession}
-        endSession={endSession}
-        onExit={handleExit}
-      />
-    )
-  }
-
+// The active-session/break/celebration state machine is owned by App.jsx
+// so any screen's Start button — not just Home's — can transition into it
+// (see App.jsx's activeTask handling). This page is just the Today screen.
+export default function HomePage({ session, startSession, onSessionStarted }) {
   return (
     <HomeSessionScreen
       session={session}
       startSession={startSession}
-      onSessionStarted={handleSessionStarted}
+      onSessionStarted={onSessionStarted}
     />
   )
 }

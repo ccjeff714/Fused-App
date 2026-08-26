@@ -22,22 +22,32 @@ export default function SignIn() {
     }
   }
 
-  if (sent) {
-    return <p>Check your email for a sign-in link.</p>
-  }
-
   return (
-    <form onSubmit={handleSignIn}>
-      <h1>Sign in to Fused</h1>
-      <input
-        type="email"
-        placeholder="you@example.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <button type="submit">Send magic link</button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </form>
+    <div className="signin-screen">
+      <div className="signin-card">
+        <div className="app-logo">
+          <span>Fused</span>
+          <span className="app-logo-dot" />
+        </div>
+        {sent ? (
+          <p>Check your email for a sign-in link.</p>
+        ) : (
+          <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <label className="field">
+              <span>Email</span>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
+            <button type="submit" className="btn btn-primary">Send magic link</button>
+            {error && <p className="error-text">{error}</p>}
+          </form>
+        )}
+      </div>
+    </div>
   )
 }

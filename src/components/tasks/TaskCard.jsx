@@ -1,39 +1,32 @@
-const PRIORITY_LABELS = {
-  critical: 'Critical',
-  high_priority: 'High priority',
-  medium_priority: 'Medium priority',
-  low_priority: 'Low priority',
-}
+import { formatDueDate, tierInfo, statusLabel } from '../../lib/taskDisplay'
+import TaskBadges from './TaskBadges'
+import AddToTodayButton from './AddToTodayButton'
+import { IconCalendar } from '../icons'
 
-const STATUS_LABELS = {
-  not_started: 'Not started',
-  in_progress: 'In progress',
-  blocked: 'Blocked',
-  done: 'Done',
-}
+export default function TaskCard({ task, projects, roles, onUpdate, onOpen }) {
+  const tier = tierInfo(task.priority_tier)
+  const done = task.status === 'done'
 
-export default function TaskCard({ task, onEdit, onDelete }) {
   return (
-    <div className="task-card">
+    <div className="task-card" style={{ borderLeftColor: tier.dot }} onClick={() => onOpen(task)}>
       <div className="task-card-main">
-        <h3>{task.title}</h3>
+        <div className={done ? 'task-card-title done' : 'task-card-title'}>{task.title}</div>
         <div className="task-card-meta">
-          <span className="due-date">
-            {task.due_date ? task.due_date : 'no due date'}
+          <span className="meta-chip">
+            <IconCalendar size={15} />
+            <span>{formatDueDate(task.due_date)}</span>
           </span>
-          <span className={`badge priority-${task.priority_tier}`}>
-            {PRIORITY_LABELS[task.priority_tier] ?? task.priority_tier}
+          <span className="meta-chip">
+            <span className="tier-dot" style={{ background: tier.dot }} />
+            <span>{tier.label}</span>
           </span>
-          <span className={`badge status-${task.status}`}>
-            {STATUS_LABELS[task.status] ?? task.status}
-          </span>
-          {task.project_id && <span className="badge project-badge">Project</span>}
+          <span className="status-chip">{statusLabel(task.status)}</span>
+          <TaskBadges task={task} projects={projects} roles={roles} />
         </div>
       </div>
-      <div className="task-card-actions">
-        <button type="button" onClick={() => onEdit(task)}>Edit</button>
-        <button type="button" onClick={() => onDelete(task)}>Delete</button>
-      </div>
+      <span onClick={(e) => e.stopPropagation()}>
+        <AddToTodayButton task={task} onUpdate={onUpdate} />
+      </span>
     </div>
   )
 }
