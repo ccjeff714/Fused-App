@@ -129,6 +129,16 @@ Full List, This Week, and Planned task cards should show a Project badge (when s
 
 ---
 
+## 10. Project Creation UI — added 2026-08-22
+
+Neither the original scope nor this spec ever actually defined how a Project gets created — §2 above only covers inline Role creation. Gap surfaced by Claude Code during the build, since without *some* creation path, Projects couldn't exist at all.
+
+**Resolved:** inline **"+ New Project"** action, scoped per Role section on the Projects View — creating a project from within a specific Role's collapsible section pre-fills and locks that project's `role_id` to the section it was created from. This mirrors the same pattern already established for tasks (a Project's Role locks a Task's Role when assigned) one level up: context you're already in determines the relationship, rather than asking for it as a separate step.
+
+No dedicated Projects CRUD screen is being built for this — same low-friction, inline-creation spirit as Roles in §2. Revisit if a standalone management screen turns out to be needed once this is in daily use, same caveat as §2's Roles screen.
+
+---
+
 ## Verification Checklist
 
 - [ ] `roles` table exists, RLS scoped correctly, `EXECUTE` on `sync_task_role_with_project()` revoked from `anon`/`authenticated`
@@ -140,6 +150,7 @@ Full List, This Week, and Planned task cards should show a Project badge (when s
 - [ ] Projects View renders Role sections collapsible, Projects nested correctly, clicking a Project shows its tasks
 - [ ] Project and Role badges appear on Full List, This Week, and Planned cards
 - [ ] Subtask checklist renders and toggles correctly wherever task detail is shown; confirm no independent due date/priority/session capability was accidentally added to checklist items
+- [ ] "+ New Project" is available inline within each Role section on the Projects View, and correctly locks the new project's `role_id` to that section
 - [ ] `area` field is untouched and unrelated to any of the above — confirm nothing conflated `area` with Role during implementation
 
 ---
