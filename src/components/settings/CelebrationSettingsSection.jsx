@@ -14,7 +14,11 @@ export default function CelebrationSettingsSection({ settings, updateSettings })
       <div className={settings.show_success_screen ? 'settings-nested' : 'settings-nested disabled'}>
         <div className="settings-row">
           <span>Gif on success screen</span>
-          <Switch checked={settings.success_screen_gif} onChange={(v) => updateSettings({ success_screen_gif: v })} />
+          <Switch
+            checked={settings.success_screen_gif}
+            onChange={(v) => updateSettings({ success_screen_gif: v })}
+            disabled={!settings.show_success_screen}
+          />
         </div>
       </div>
       <div className="settings-row">

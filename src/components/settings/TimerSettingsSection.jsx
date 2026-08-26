@@ -27,6 +27,7 @@ export default function TimerSettingsSection({ settings, updateSettings }) {
             className="select"
             value={settings.default_session_minutes}
             onChange={(e) => updateSettings({ default_session_minutes: Number(e.target.value) })}
+            disabled={!pomodoroOn}
           >
             {WORK_OPTIONS.map((m) => <option key={m} value={m}>{m} min</option>)}
           </select>
@@ -37,17 +38,18 @@ export default function TimerSettingsSection({ settings, updateSettings }) {
             className="select"
             value={settings.default_break_minutes}
             onChange={(e) => updateSettings({ default_break_minutes: Number(e.target.value) })}
+            disabled={!pomodoroOn}
           >
             {BREAK_OPTIONS.map((m) => <option key={m} value={m}>{m} min</option>)}
           </select>
         </div>
         <div className="settings-row">
           <span>Start breaks automatically</span>
-          <Switch checked={settings.auto_start_breaks} onChange={(v) => updateSettings({ auto_start_breaks: v })} />
+          <Switch checked={settings.auto_start_breaks} onChange={(v) => updateSettings({ auto_start_breaks: v })} disabled={!pomodoroOn} />
         </div>
         <div className="settings-row">
           <span>Start work sprints automatically</span>
-          <Switch checked={settings.auto_start_next_sprint} onChange={(v) => updateSettings({ auto_start_next_sprint: v })} />
+          <Switch checked={settings.auto_start_next_sprint} onChange={(v) => updateSettings({ auto_start_next_sprint: v })} disabled={!pomodoroOn} />
         </div>
       </div>
     </>
