@@ -216,6 +216,7 @@ This question doesn't actually arise under the model above. "Add to Today" never
 
 - Fires on marking a task **done** (`status: 'done'`), not on ending a session — these are different moments (a session can end without the task being finished). Confirmed per Jeffrey 2026-08-20.
 - Add an explicit "Mark Complete" action on the Active Session Screen that sets `status: 'done'` and triggers the celebration sequence (success screen, gif, sound — each independently toggleable per `profiles.settings`), separate from End Session.
+- **Resolved 2026-08-22 — Mark Complete also closes out the session.** The spec's original wording ("separate from End Session") only established that ending a session doesn't imply task completion — it left the reverse direction ambiguous. Confirmed: Mark Complete **also** performs End Session's writes (`execution_sessions.ended_at`/`duration_sec`, `tasks.last_touched_at`, `streak_log` upsert) as part of the same action, rather than leaving the session row open and requiring a separate End Session tap afterward. Rationale: there's no real scenario where someone completes a task and then keeps the timer running against it — leaving the session open in that case would just risk an orphaned `execution_sessions` row with no `ended_at`, and a completed task not counting toward that day's streak unless the person remembers a second tap.
 
 ### A6. Visual Design System
 
