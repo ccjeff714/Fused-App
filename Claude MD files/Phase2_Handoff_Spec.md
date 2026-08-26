@@ -174,11 +174,43 @@ src/
 - **End Session stays fully manual and separate from this cycle**, confirmed per Jeffrey's decision 2026-08-20 — auto-transitioning between work/break does **not** fire the `execution_sessions`/`last_touched_at`/`streak_log` writes. Those only fire on an explicit End Session tap, regardless of how many work/break cycles ran first.
 - **`duration_sec` sums work-sprint time only** — confirmed per Jeffrey 2026-08-20. Break time is excluded from the execution log; it isn't work on the task.
 
-### A4. "Move to Top 3" (replaces "Swap")
+### A3a. "Pomodoro Sprints" Master Toggle — added 2026-08-22
 
-- Every Full List task card gets a "Move to Top 3" quick action — not limited to a picker of tasks external to the current Top 3. This resolves Jeffrey's stated tension (want both broad task access *and* a capped display): selection pool is the entire Full List, but the Top 3 display itself still never exceeds 3 slots.
-- Underlying mechanism is unchanged from the original override design — this is a UI/labeling change, not a schema change. Assigning a task to a slot still writes `top3_override_slot` / `top3_override_date`, and still displaces whatever task previously held that slot.
-- `ManualOverridePicker.jsx` is retired in favor of the per-card action; `TopThreeCard.jsx` and Full List task cards both need the "Move to Top 3" affordance.
+Traces back to the BlitzIt reference screenshot's "Pomodoros" toggle sitting above "Work sprint"/"Break" — carried over its children (durations, auto-start toggles) when building the Settings schema but missed the parent toggle itself. Added as real scope, not cosmetic:
+
+- New key: `pomodoro_enabled` (boolean, default `true`), already applied to `profiles.settings`.
+- **When `true` (default):** Active Session Screen behaves exactly as specified in A3 — countdown sprint, optional auto-transition to break, etc.
+- **When `false`:** Active Session Screen falls back to a plain stopwatch — counts up from zero with no fixed length, no break cycle, no auto-transitions. End Session ends it whenever the person taps it, same as always.
+- **`duration_sec` in stopwatch mode** is simply total elapsed time from start to End Session — there's no sprint/break split to exclude anything from, unlike A3's "work-sprint time only" rule, which only applies when Pomodoro mode is active.
+- **Settings page UI:** `default_session_minutes`, `default_break_minutes`, `auto_start_breaks`, and `auto_start_next_sprint` should visually nest under and disable/gray out alongside the master toggle when it's off — matching the BlitzIt reference's indentation, since none of those settings mean anything in stopwatch mode.
+
+### A3b. success_sound_effect — no audio asset exists
+
+Same placeholder situation as the session background photo and celebration gif (A6): the setting is real and live, but no audio file exists anywhere in the repo or design bundle. **Resolved 2026-08-22: leave it silent** — when `success_sound_effect` is `true` but no asset is configured, play nothing, no error state. This is a deliberate difference in reasoning from A3a above, not an inconsistency: unlike the master Pomodoro toggle (a real behavior gap that needed a decision), this is content Jeffrey hasn't supplied yet, same category as the photo and gif. Code should reference a static asset path (e.g. `assets/sounds/success.mp3`) and wrap the play call so a missing file fails silently rather than throwing.
+
+An earlier version of this spec conflated two different needs into one "Move to Top 3" action. They've been separated, per Jeffrey's decision 2026-08-21, based on a real workflow: pulling extra tasks into today (e.g. two 30-minute tasks run in parallel with a Top 3 pick) without displacing anything, versus deliberately forcing a specific task into one of the three real slots.
+
+**"Add to Today"** (Full List, This Week, and Planned cards — replaces the old "Move to Top 3" label):
+- A toggle, not a one-way action. Clicking it sets `tasks.planned_date` to today. If the task already has `planned_date` set to today, clicking again clears `planned_date` to `null` entirely — it does **not** restore a previously-set other-day planned date, if one existed.
+- Never touches `top3_override_slot`/`top3_override_date` or displaces anything already in the real Top 3.
+- The button's visual state must differ between "not planned for today" and "planned for today" (e.g. filled/active style), so the toggle behavior is legible at a glance rather than requiring a second click to discover.
+- No schema change — this is pure UI/behavior built on the existing `planned_date` column from Phase 5.
+
+**"Also Today"** (new section on the Home screen, below the existing Top 3 cards):
+- Lists every task where `planned_date` = today, **excluding** whichever three tasks are already shown in Top 3 above (a task can't appear twice).
+- Fully hidden — no header, no empty state — when there are no such tasks. Appears only once at least one exists.
+- Each card in this section needs its own "Remove from Today" action (same toggle-off behavior as clicking "Add to Today" again), so a task can be un-planned from here directly without navigating back to wherever it was originally added.
+- Staleness is automatic, same pattern as the override columns: an item just stops appearing once `planned_date` isn't today anymore. No cleanup job needed.
+
+**"Swap"** (`TopThreeCard` only — unchanged in purpose, but the picker it opens was never fully specified until now):
+- Opens a modal scoped to the specific slot that triggered it: a text search field (filters by title as typed) above a list of every incomplete task (`status != 'done'`), **no exclusions** — including tasks already visible in Also Today. Each row shows title, due date, and priority tier.
+- Clicking a row **assigns immediately, no confirmation step** — writes that task into the slot and closes the picker.
+- This is the same override mechanism as before (`top3_override_slot`/`top3_override_date`), just with its selection UI now fully specified. `ManualOverridePicker.jsx` is **not** retired after all — it's revived, invoked only from Swap rather than from Full List cards.
+- Displacing the previous slot occupant is the same non-atomic "clear old, set new" sequence already logged in `CLAUDE.md`'s Gotchas as a deliberate, accepted deferral (bundled with the session-end write sequence, revisit together in Phase 10) — no new atomicity work needed here, just confirming the picker triggers the existing sequence correctly.
+
+### A4a. Which slot does "Add to Today" claim? — resolved: it claims none
+
+This question doesn't actually arise under the model above. "Add to Today" never touches a Top 3 slot at all — it only sets `planned_date`. The only mechanism that assigns a specific slot is Swap, and Swap always operates on the one slot the person clicked from `TopThreeCard`, so there's no ambiguity about which of the three gets displaced.
 
 ### A5. Celebration Trigger
 
@@ -234,7 +266,15 @@ The calendar date-picker used for Due Date in the Capture modal must be reused e
 - [ ] Settings page renders and persists all six original keys correctly
 - [ ] Auto-start toggles control timer transitions only — End Session writes remain fully manual regardless of toggle state
 - [ ] `duration_sec` excludes break time
-- [ ] "Move to Top 3" is available from every Full List card, still caps the Home screen display at 3
+- [ ] `pomodoro_enabled` toggle works: `true` behaves per A3, `false` falls back to a plain count-up stopwatch with no sprint/break structure
+- [ ] Settings page nests/disables sprint-duration and auto-start settings under the master toggle when it's off
+- [ ] `duration_sec` in stopwatch mode is simple elapsed time, not work-sprint-only (that rule is Pomodoro-mode-specific)
+- [ ] `success_sound_effect` fails silently with no error when no audio asset is configured
+- [ ] "Add to Today" is a toggle on Full List/This Week/Planned cards, sets/clears `planned_date` to today, never touches `top3_override_slot`/`top3_override_date`
+- [ ] Button visual state clearly differs between "not planned today" and "planned today"
+- [ ] Also Today section shows all `planned_date = today` tasks excluding whatever's in the real Top 3, hidden entirely when empty
+- [ ] Also Today cards have their own "Remove from Today" action
+- [ ] Swap opens a searchable (by title) list of every incomplete task, no exclusions, and assigns immediately on click with no confirmation step
 - [ ] Celebration fires on task completion (status → done), not on session end
 - [ ] No Broadsheet/print-editorial styling remains anywhere (no CMYK effects, no halftone, no serif display type)
 - [ ] All four priority-tier colors are independent tokens, not aliased to `--blue-*`/`--green-*`; critical is true saturated red
