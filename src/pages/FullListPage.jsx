@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { useTasks } from '../hooks/useTasks'
-import { useProjects } from '../hooks/useProjects'
-import { useRoles } from '../hooks/useRoles'
 import TaskListView from '../components/tasks/TaskListView'
 import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
 
@@ -11,10 +9,14 @@ import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
 // how the screen was entered, not whatever status filter is currently
 // selected, so the heading doesn't flip back to "Full list" just because
 // someone clears the Done filter chip after arriving via Completed.
-export default function FullListPage({ session, initialStatusFilter = 'all', isCompletedEntry = false, captureOpen, onCloseCapture }) {
+// App.jsx renders this with key={route} so Completed always forces
+// status=done and Full List always resets to its own default on every
+// fresh entry, regardless of which of the two was open before.
+export default function FullListPage({
+  session, initialStatusFilter = 'all', isCompletedEntry = false, captureOpen, onCloseCapture,
+  roles, createRole, projects,
+}) {
   const { tasks, loading, error, createTask, updateTask, deleteTask } = useTasks(session)
-  const { projects } = useProjects(session)
-  const { roles, createIfNew: createRole } = useRoles(session)
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter)
 
   return (

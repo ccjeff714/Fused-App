@@ -80,7 +80,16 @@ export default function ActiveSessionScreen({
           <div className="timer-ring-wrap">
             <svg viewBox="0 0 340 340" width="320" height="320" style={{ transform: 'rotate(-90deg)' }}>
               <circle cx="170" cy="170" r="160" fill="none" stroke="currentColor" strokeOpacity="0.22" strokeWidth="2" />
-              {!isStopwatch && (
+              {isStopwatch ? (
+                // No fixed duration to calculate a percentage against in
+                // stopwatch mode, so a static/full progress ring here just
+                // reads as broken. A breathing pulse signals "session is
+                // live" instead of implying progress toward anything.
+                <circle
+                  cx="170" cy="170" r="160" fill="none" stroke="var(--work-accent)" strokeWidth="3"
+                  className="timer-ring-pulse"
+                />
+              ) : (
                 <circle
                   cx="170" cy="170" r="160" fill="none" stroke="var(--work-accent)" strokeWidth="3"
                   strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={ringOffset}

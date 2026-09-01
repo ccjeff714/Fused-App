@@ -16,11 +16,15 @@ export function isoDaysFromToday(offset) {
   return toISO(d)
 }
 
+// Deliberately no weekday here — every caller pairs this with its own
+// weekday label (weekdayName, or "Today"/"Tomorrow") shown separately, so
+// including it here as well produced literal duplicate text ("Tuesday
+// Tuesday, September 1").
 export function formatLongDate(iso) {
   if (!iso) return ''
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    weekday: 'long', month: 'long', day: 'numeric',
+    month: 'long', day: 'numeric',
   })
 }
 

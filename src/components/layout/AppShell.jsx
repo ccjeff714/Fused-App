@@ -11,8 +11,6 @@ import {
   IconSettings,
   IconPlus,
 } from '../icons'
-import { useRoles } from '../../hooks/useRoles'
-import { useProjects } from '../../hooks/useProjects'
 import ProjectCreateModal from '../projects/ProjectCreateModal'
 
 const LISTS_NAV = [
@@ -45,15 +43,13 @@ function NavButton({ item, active, onClick }) {
 
 export default function AppShell({
   route, onNavigate, isDark, onToggleTheme, session, chromeVisible, children,
-  onOpenCapture, showCapture,
+  onOpenCapture, showCapture, roles, createRole, createProject,
 }) {
-  // Owns its own data for the sidebar's global "+ New Project" entry point
-  // (Phase5_Handoff_Spec.md §10's second entry point, added this round) —
-  // independent of whatever page-level useProjects/useRoles instances
-  // exist, since this action isn't tied to a specific already-rendered
-  // list the way quick capture is.
-  const { roles } = useRoles(session)
-  const { createProject } = useProjects(session)
+  // roles/createProject come from App.jsx's single shared useRoles/
+  // useProjects instance (Phase5_Handoff_Spec.md §10's second entry
+  // point) — previously this component had its own separate instance,
+  // which was the actual bug behind newly created projects not showing
+  // up elsewhere without a hard refresh.
   const [projectModalOpen, setProjectModalOpen] = useState(false)
 
   if (!chromeVisible) {
@@ -118,6 +114,7 @@ export default function AppShell({
         <ProjectCreateModal
           roles={roles}
           onCreate={createProject}
+          onCreateRole={createRole}
           onClose={() => setProjectModalOpen(false)}
         />
       )}

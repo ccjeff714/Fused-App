@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useTasks } from '../hooks/useTasks'
-import { useProjects } from '../hooks/useProjects'
-import { useRoles } from '../hooks/useRoles'
 import { statusLabel } from '../lib/taskDisplay'
 import TaskEditModal from '../components/tasks/TaskEditModal'
 import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
@@ -13,11 +11,15 @@ import { IconChevronRight, IconChevronLeft, IconPlay, IconPlus } from '../compon
 // creation here is one of two entry points (Phase5_Handoff_Spec.md §10)
 // — the other is the sidebar's global "+" next to Projects (AppShell) —
 // sharing components/projects/ProjectCreateModal.jsx. This one locks Role
-// to whichever section it was opened from.
-export default function ProjectsPage({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
+// to whichever section it was opened from. roles/createRole/projects/
+// createProject come from App.jsx's single shared instance — this used to
+// have its own separate useRoles/useProjects, which was the actual bug
+// behind a newly created Role/Project not showing up without a refresh.
+export default function ProjectsPage({
+  session, startSession, onSessionStarted, captureOpen, onCloseCapture,
+  roles, createRole, projects, createProject,
+}) {
   const { tasks, createTask, updateTask } = useTasks(session)
-  const { projects, createProject } = useProjects(session)
-  const { roles, createIfNew: createRole } = useRoles(session)
   const [openRoleIds, setOpenRoleIds] = useState(() => new Set())
   const [focusProjectId, setFocusProjectId] = useState(null)
   const [newProjectRoleId, setNewProjectRoleId] = useState(null)
@@ -64,6 +66,11 @@ export default function ProjectsPage({ session, startSession, onSessionStarted, 
           </button>
           <div className="eyebrow" style={{ marginBottom: 12 }}>{focusRole?.name ?? ''}</div>
           <h1 className="screen-title">{focusProject.name}</h1>
+          {focusProject.description && (
+            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-md)', maxWidth: '60ch', marginBottom: 12 }}>
+              {focusProject.description}
+            </p>
+          )}
           <p className="screen-subtitle">{focusOpenCount} open of {focusTasks.length} {focusTasks.length === 1 ? 'task' : 'tasks'}</p>
         </header>
 
@@ -204,6 +211,7 @@ export default function ProjectsPage({ session, startSession, onSessionStarted, 
           lockedRoleId={newProjectRoleId}
           lockedRoleName={roles.find((r) => r.id === newProjectRoleId)?.name}
           onCreate={createProject}
+          onCreateRole={createRole}
           onClose={() => setNewProjectRoleId(null)}
         />
       )}

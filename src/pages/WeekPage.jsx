@@ -1,43 +1,50 @@
 import { useState, useMemo } from 'react'
 import { useTasks } from '../hooks/useTasks'
-import { useProjects } from '../hooks/useProjects'
-import { useRoles } from '../hooks/useRoles'
-import { isoDaysFromToday, weekdayName, formatLongDate } from '../lib/date'
-import WeekCard from '../components/tasks/WeekCard'
+import { todayISO, mondayOfWeek, addDaysISO, weekdayName, formatLongDate } from '../lib/date'
+import TaskCard from '../components/tasks/TaskCard'
 import TaskEditModal from '../components/tasks/TaskEditModal'
 import TaskCaptureModal from '../components/tasks/TaskCaptureModal'
 
-function buildDayGroups() {
+// Fixed Monday–Sunday of the CURRENT calendar week — deliberately distinct
+// from Planned's "This Week" bucket, which is a rolling 7-day window from
+// today. Don't unify the two.
+function buildDayGroups(today) {
+  const monday = mondayOfWeek(today)
   const groups = []
   for (let offset = 0; offset < 7; offset++) {
-    const iso = isoDaysFromToday(offset)
-    const label = offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : weekdayName(iso)
+    const iso = addDaysISO(monday, offset)
+    const label = iso === today ? 'Today' : iso === addDaysISO(today, 1) ? 'Tomorrow' : weekdayName(iso)
     groups.push({ iso, label, date: formatLongDate(iso) })
   }
   return groups
 }
 
-const DAY_GROUPS = buildDayGroups()
-
-export default function WeekPage({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
+export default function WeekPage({
+  session, startSession, onSessionStarted, captureOpen, onCloseCapture,
+  roles, createRole, projects,
+}) {
   const { tasks, loading, error, createTask, updateTask } = useTasks(session)
-  const { projects } = useProjects(session)
-  const { roles, createIfNew: createRole } = useRoles(session)
   const [openTaskId, setOpenTaskId] = useState(null)
 
   const openTask = tasks.find((t) => t.id === openTaskId) ?? null
+  const dayGroups = useMemo(() => buildDayGroups(todayISO()), [])
 
-  // Grouped by due_date only — an item with no due date has no claim to
-  // "this week" (confirmed manual-test fix; previously an Unscheduled
-  // bucket recreated the "identical to Full List" problem this screen was
-  // built to solve).
+  // Matches due_date OR planned_date falling within this Monday–Sunday —
+  // a task planned for a day this week (even with no due date at all)
+  // belongs here, same as one that's due that day.
   const groups = useMemo(() => {
-    const notDone = tasks.filter((t) => t.status !== 'done')
-    return DAY_GROUPS.map((g) => ({
+    const weekStart = dayGroups[0].iso
+    const weekEnd = dayGroups[6].iso
+    const inWeek = (iso) => iso && iso >= weekStart && iso <= weekEnd
+    const notDone = tasks.filter((t) => t.status !== 'done' && (inWeek(t.due_date) || inWeek(t.planned_date)))
+
+    const groupDateFor = (t) => (inWeek(t.due_date) ? t.due_date : t.planned_date)
+
+    return dayGroups.map((g) => ({
       ...g,
-      tasks: notDone.filter((t) => t.due_date === g.iso),
+      tasks: notDone.filter((t) => groupDateFor(t) === g.iso),
     }))
-  }, [tasks])
+  }, [tasks, dayGroups])
 
   const visibleGroups = groups.filter((g) => g.tasks.length > 0)
 
@@ -49,7 +56,7 @@ export default function WeekPage({ session, startSession, onSessionStarted, capt
   return (
     <main className="screen">
       <header>
-        <div className="eyebrow" style={{ marginBottom: 12 }}>{DAY_GROUPS[0].date} – {DAY_GROUPS[6].date}</div>
+        <div className="eyebrow" style={{ marginBottom: 12 }}>{dayGroups[0].date} – {dayGroups[6].date}</div>
         <h1 className="screen-title">This week</h1>
         <p className="screen-subtitle">The same recommendations as Today's Top 3, laid out by day. Nothing here is prescribed — browse it and pull anything forward.</p>
       </header>
@@ -59,7 +66,7 @@ export default function WeekPage({ session, startSession, onSessionStarted, capt
       {loading ? (
         <p>Loading...</p>
       ) : visibleGroups.length === 0 ? (
-        <p>Nothing due this week.</p>
+        <p>Nothing due or planned this week.</p>
       ) : (
         <div className="week-section">
           {visibleGroups.map((group) => (
@@ -69,9 +76,9 @@ export default function WeekPage({ session, startSession, onSessionStarted, capt
                 <span className="week-group-date">{group.date}</span>
                 <span className="week-group-count">{group.tasks.length} {group.tasks.length === 1 ? 'task' : 'tasks'}</span>
               </div>
-              <div className="week-grid">
+              <div className="task-grid">
                 {group.tasks.map((task) => (
-                  <WeekCard
+                  <TaskCard
                     key={task.id}
                     task={task}
                     projects={projects}

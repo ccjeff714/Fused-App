@@ -36,9 +36,20 @@ export default function TaskDetailPanel({ task, projects, roles, onUpdate, onCre
   const handleRoleChange = (roleId) => save({ role_id: roleId || null })
   const handleProjectChange = (e) => save({ project_id: e.target.value || null })
 
+  // The backdrop must stack BELOW the panel (z-index 49 < .task-panel's 50)
+  // — the reverse was the actual bug behind "panel won't scroll / closes
+  // when a field is clicked": with .modal-backdrop's default z-index:60
+  // it sat ON TOP of the panel across the whole viewport (it's
+  // full-screen and transparent, so this was invisible), silently
+  // swallowing every scroll and click meant for the panel's own content,
+  // including clicks on other Top 3 cards elsewhere on the page.
+  // With correct stacking, the opaque panel naturally blocks the
+  // backdrop from ever seeing a click on its own surface — no
+  // stopPropagation trickery needed for that half. It's kept anyway as
+  // a harmless defensive measure.
   return (
     <>
-      <div className="modal-backdrop" style={{ background: 'transparent', padding: 0 }} onClick={onClose} />
+      <div className="modal-backdrop" style={{ background: 'transparent', padding: 0, zIndex: 49 }} onClick={onClose} />
       <aside className="task-panel" onClick={(e) => e.stopPropagation()}>
         <div className="panel-header">
           <div>

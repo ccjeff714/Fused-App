@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { PROJECT_STATUSES, projectStatusLabel } from '../../lib/taskDisplay'
+import RoleSelect from '../tasks/RoleSelect'
 
 // Shared by both Project-creation entry points (Phase5_Handoff_Spec.md §10
 // + this round's addition of a second entry point):
 // - Inline "+ New Project" per Role section on Projects View — passes
 //   lockedRoleId/lockedRoleName, Role is fixed to that section.
 // - The sidebar "+" next to Projects, reachable from anywhere — has no
-//   Role context to inherit, so Role renders as a required, editable
-//   select instead.
-export default function ProjectCreateModal({ roles, lockedRoleId, lockedRoleName, onCreate, onClose }) {
+//   Role context to inherit, so Role renders as a required RoleSelect
+//   (with its own inline "+ New role" creation) instead.
+export default function ProjectCreateModal({ roles, lockedRoleId, lockedRoleName, onCreate, onCreateRole, onClose }) {
   const [fields, setFields] = useState({
     name: '',
     description: '',
@@ -59,19 +60,22 @@ export default function ProjectCreateModal({ roles, lockedRoleId, lockedRoleName
             />
           </label>
 
-          <label className="field">
-            <span>Role</span>
-            {lockedRoleId ? (
+          {lockedRoleId ? (
+            <label className="field">
+              <span>Role</span>
               <select className="select" value={lockedRoleId} disabled style={{ opacity: 0.6 }}>
                 <option value={lockedRoleId}>{lockedRoleName}</option>
               </select>
-            ) : (
-              <select className="select" value={fields.role_id} onChange={setField('role_id')} required>
-                <option value="">Select a role</option>
-                {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            )}
-          </label>
+            </label>
+          ) : (
+            <RoleSelect
+              roles={roles}
+              value={fields.role_id}
+              onChange={(roleId) => setFields((f) => ({ ...f, role_id: roleId }))}
+              onCreateRole={onCreateRole}
+              required
+            />
+          )}
 
           <label className="field">
             <span>Description</span>

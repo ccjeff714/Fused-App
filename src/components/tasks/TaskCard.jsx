@@ -1,9 +1,14 @@
 import { formatDueDate, tierInfo, statusLabel } from '../../lib/taskDisplay'
 import TaskBadges from './TaskBadges'
 import AddToTodayButton from './AddToTodayButton'
-import { IconCalendar } from '../icons'
+import { IconCalendar, IconPlay } from '../icons'
 
-export default function TaskCard({ task, projects, roles, onUpdate, onOpen }) {
+// The one task-card component — used by Full List, This Week, and (via
+// PlannedRow's own row layout, a deliberately different shape) not
+// Planned. `onStart` is optional: Full List omits it (no direct-start
+// affordance there); This Week passes it, since browsing there is meant
+// to lead straight into a session, same spirit as Today's Top 3.
+export default function TaskCard({ task, projects, roles, onUpdate, onOpen, onStart }) {
   const tier = tierInfo(task.priority_tier)
   const done = task.status === 'done'
 
@@ -24,6 +29,16 @@ export default function TaskCard({ task, projects, roles, onUpdate, onOpen }) {
           <TaskBadges task={task} projects={projects} roles={roles} />
         </div>
       </div>
+      {onStart && (
+        <button
+          type="button"
+          className="btn btn-progress btn-sm"
+          onClick={(e) => { e.stopPropagation(); onStart(task) }}
+        >
+          <IconPlay size={14} />
+          <span>Start</span>
+        </button>
+      )}
       <span onClick={(e) => e.stopPropagation()}>
         <AddToTodayButton task={task} onUpdate={onUpdate} />
       </span>

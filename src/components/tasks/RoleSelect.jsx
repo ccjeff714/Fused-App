@@ -9,7 +9,10 @@ const NEW_ROLE_VALUE = '__new__'
 // column for every row, so pass hideLabel there — otherwise this
 // component's own internal label doubles it up (one above the field from
 // here, one beside it from the grid).
-export default function RoleSelect({ roles, value, onChange, disabled, hint, opacity, onCreateRole, hideLabel }) {
+// `required` drops the "No role" option in favor of a disabled placeholder
+// — for ProjectCreateModal's global (non-role-locked) entry point, where
+// Role is a required field rather than the usual optional task field.
+export default function RoleSelect({ roles, value, onChange, disabled, hint, opacity, onCreateRole, hideLabel, required }) {
   const [creating, setCreating] = useState(false)
   const [draft, setDraft] = useState('')
 
@@ -73,9 +76,10 @@ export default function RoleSelect({ roles, value, onChange, disabled, hint, opa
           value={value || ''}
           onChange={handleSelect}
           disabled={disabled}
+          required={required}
           style={{ opacity }}
         >
-          <option value="">No role</option>
+          <option value="" disabled={required}>{required ? 'Select a role' : 'No role'}</option>
           {roles.map((role) => (
             <option key={role.id} value={role.id}>{role.name}</option>
           ))}

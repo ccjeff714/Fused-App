@@ -311,39 +311,6 @@
 .week-group-date { font-size: var(--text-sm); color: var(--text-tertiary); }
 .week-group-count { margin-left: auto; font-size: var(--text-xs); color: var(--text-tertiary); }
 
-.week-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
-  max-width: 1000px;
-}
-
-.week-card {
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 20px;
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
-}
-
-.week-card-title-row { display: flex; align-items: flex-start; gap: 10px; }
-.week-card-title { font-size: var(--text-md); font-weight: 600; letter-spacing: var(--tracking-tight); line-height: var(--leading-tight); text-wrap: pretty; }
-
-.week-card-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-}
-
-.week-card-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; }
-
 /* ===== Planned ===== */
 .planned-group { display: flex; flex-direction: column; gap: 40px; max-width: 780px; }
 .planned-group-header {
@@ -578,6 +545,11 @@
 
 .timer-ring-wrap { position: relative; width: 320px; height: 320px; }
 .timer-ring-wrap.break { width: 300px; height: 300px; }
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.35; stroke-width: 3; }
+  50% { opacity: 0.9; stroke-width: 5; }
+}
+.timer-ring-pulse { animation: ring-pulse 2.4s ease-in-out infinite; }
 .timer-ring-face {
   position: absolute;
   inset: 0;

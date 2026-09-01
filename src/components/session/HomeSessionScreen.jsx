@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useTasks } from '../../hooks/useTasks'
 import { useTopThree } from '../../hooks/useTopThree'
-import { useProjects } from '../../hooks/useProjects'
-import { useRoles } from '../../hooks/useRoles'
 import { todayISO } from '../../lib/date'
 import TopThreeCard from './TopThreeCard'
 import AlsoTodayCard from './AlsoTodayCard'
@@ -10,11 +8,12 @@ import ManualOverridePicker from './ManualOverridePicker'
 import TaskCaptureModal from '../tasks/TaskCaptureModal'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
 
-export default function HomeSessionScreen({ session, startSession, onSessionStarted, captureOpen, onCloseCapture }) {
+export default function HomeSessionScreen({
+  session, startSession, onSessionStarted, captureOpen, onCloseCapture,
+  roles, createRole, projects,
+}) {
   const { tasks, createTask, updateTask } = useTasks(session)
   const { topThree, loading, error, setOverride, refetch } = useTopThree(session)
-  const { projects } = useProjects(session)
-  const { roles, createIfNew: createRole } = useRoles(session)
   const [swapSlot, setSwapSlot] = useState(null)
   const [panelTaskId, setPanelTaskId] = useState(null)
   const [starting, setStarting] = useState(false)
